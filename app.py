@@ -1,7 +1,4 @@
-import io
-import os
 import shutil
-import urllib
 import warnings
 
 import numpy as np
@@ -10,7 +7,7 @@ import plotly.express as px
 import streamlit as st
 import umap
 from category_encoders.one_hot import OneHotEncoder
-from cyvcf2 import VCF, Writer
+from cyvcf2 import VCF
 from MulticoreTSNE import MulticoreTSNE as TSNE
 from sklearn.decomposition import PCA
 from sklearn.impute import KNNImputer
