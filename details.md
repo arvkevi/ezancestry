@@ -35,4 +35,4 @@ The subset of `SNPs` were chosen from two publications which identified **AISNPs
 * `Population`: One of the 26 populations listed [here](http://www.internationalgenome.org/faq/which-populations-are-part-your-study/).
 
 ### Code  
-The code used to process this data is available on [GitHub](https://github.com/arvkevi/ezncstry).
+The code used to process this data is available on [GitHub](https://github.com/arvkevi/ezancestry).
