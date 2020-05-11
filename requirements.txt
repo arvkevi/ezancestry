@@ -1,0 +1,10 @@
+category_encoders
+MulticoreTSNE
+numpy
+pandas
+plotly
+scikit-learn
+scipy
+snps
+streamlit
+umap-learn
