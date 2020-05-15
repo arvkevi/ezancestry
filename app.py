@@ -150,7 +150,7 @@ def get_1kg_samples():
     :return: DataFrame of sample-level population information
     :rtype: pandas DataFrame
     """
-    onekg_samples = "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel"
+    onekg_samples = "data/integrated_call_samples_v3.20130502.ALL.panel"
     dfsamples = pd.read_csv(onekg_samples, sep="\t")
     dfsamples.set_index("sample", inplace=True)
     dfsamples.drop(columns=["Unnamed: 4", "Unnamed: 5"], inplace=True)
