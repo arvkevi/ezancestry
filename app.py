@@ -1,4 +1,3 @@
-import shutil
 import warnings
 
 import numpy as np
@@ -15,6 +14,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from snps import SNPs
 
 warnings.filterwarnings("ignore")
+st.set_option('deprecation.showfileUploaderEncoding', False)
 
 
 def main():
@@ -61,10 +61,7 @@ def main():
     if user_file is not None:
         try:
             with st.spinner("Uploading your genotypes..."):
-                with open("user_snps_file.txt", "w") as file:
-                    user_file.seek(0)
-                    shutil.copyfileobj(user_file, file)
-                userdf = SNPs("user_snps_file.txt").snps
+                userdf = SNPs(user_file.getvalue()).snps
         except Exception as e:
             st.error(
                 f"Sorry, there was a problem processing your genotypes file.\n {e}"
