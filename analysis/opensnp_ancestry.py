@@ -152,12 +152,7 @@ def process_file(task):
     knn_pop = task["knn_pop"]
 
     try:
-        user_snps = SNPs(
-            r.load_opensnp_datadump_file(file),
-            deduplicate=False,
-            deduplicate_XY_chrom=False,
-            deduplicate_MT_chrom=False,
-        )
+        user_snps = SNPs(r.load_opensnp_datadump_file(file))
 
         # filter out files that likely don't have AISNPs
         if user_snps.count < 100000:
