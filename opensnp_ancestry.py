@@ -9,6 +9,7 @@ Relative paths assume script is being run from analysis dir.
 """
 
 import logging
+import os
 import random
 
 import numpy as np
@@ -42,8 +43,18 @@ DATA_DIR = "data"
 # assume `opensnp_datadump.current.zip` is found at this location
 r = Resources(resources_dir=DATA_DIR)
 
+# setup logger to output to file in output directory
+logging.basicConfig(
+    filename=f'{os.path.join(OUTPUT_DIR, "opensnp_ancestry.txt")}',
+    format="%(asctime)s: %(message)s",
+    filemode="w",
+    level=logging.INFO,
+)
+
 
 def main():
+    logging.info("start analysis")
+
     # get filenames from openSNP data dump
     filenames = r.get_opensnp_datadump_filenames()
 
@@ -153,6 +164,8 @@ def main():
 
     save_df_as_csv(df, OUTPUT_DIR, "opensnp_ancestry.csv")
 
+    logging.info("analysis done!")
+
 
 def process_file(task):
     file = task["file"]
@@ -168,6 +181,7 @@ def process_file(task):
 
         # filter out files that likely don't have AISNPs
         if user_snps.count < 100000:
+            logging.info(f"{file}: <100k SNPs")
             return None
 
         d = {
@@ -192,7 +206,8 @@ def process_file(task):
         d.update(dict(get_predicted_probs(knn_pop, user_reduced).loc["user"]))
 
         return d
-    except:
+    except Exception as err:
+        logging.info(f"{file}: {str(err).strip()[:100]}")
         return None
 
 
