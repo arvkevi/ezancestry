@@ -159,6 +159,9 @@ def main():
             "STU",
             "TSI",
             "YRI",
+            "component1",
+            "component2",
+            "component3",
         ],
     )
 
@@ -204,6 +207,13 @@ def process_file(task):
 
         d.update(dict(get_predicted_probs(knn_super_pop, user_reduced).loc["user"]))
         d.update(dict(get_predicted_probs(knn_pop, user_reduced).loc["user"]))
+        d.update(
+            {
+                "component1": user_reduced[0][0],
+                "component2": user_reduced[0][1],
+                "component3": user_reduced[0][2],
+            }
+            )
 
         return d
     except Exception as err:
