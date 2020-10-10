@@ -59,11 +59,13 @@ def main():
     # draw a sample from the observations
     random.seed(1)
     SAMPLE_SIZE = len(filenames)
-    #SAMPLE_SIZE = 10
+    # SAMPLE_SIZE = 10
     samples = random.sample(range(len(filenames)), SAMPLE_SIZE)
 
     # get the 1000 genomes samples
-    dfsamples = get_1kg_samples(f"{DATA_DIR}/integrated_call_samples_v3.20130502.ALL.panel")
+    dfsamples = get_1kg_samples(
+        f"{DATA_DIR}/integrated_call_samples_v3.20130502.ALL.panel"
+    )
     logging.info("retreived the 1kg samples")
 
     aisnps_1kg = (
