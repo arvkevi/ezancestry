@@ -54,3 +54,10 @@ Visualize you genotypes at [http://ezancestry.herokuapp.com/](http://ezancestry.
     ```
     (.venv) $ deactivate
     ```
+
+
+## Run ezancestry on openSNP data!
+Thanks to [Andrew Riha](https://github.com/apriha), it's easy to predict the ancestries for all of the [openSNP](https://opensnp.org/) samples:
+1. Download the [data](https://opensnp.org/data/zip/opensnp_datadump.current.zip) to the `data` directory. It's a large zipped directory!
+2. Follow steps 1-5 above.
+3. Run `python opensnp_ancestry.py` and wait for the results.

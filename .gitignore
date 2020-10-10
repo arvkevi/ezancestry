@@ -5,3 +5,5 @@
 .python-version
 .vscode
 .venv
+output
+opensnp_datadump.current.zip

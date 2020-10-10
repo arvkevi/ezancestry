@@ -5,6 +5,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 import umap
+
 from category_encoders.one_hot import OneHotEncoder
 from cyvcf2 import VCF
 from MulticoreTSNE import MulticoreTSNE as TSNE
@@ -12,6 +13,15 @@ from sklearn.decomposition import PCA
 from sklearn.impute import KNNImputer
 from sklearn.neighbors import KNeighborsClassifier
 from snps import SNPs
+
+from util import (
+    get_1kg_samples,
+    encode_genotypes,
+    dimensionality_reduction,
+    filter_user_genotypes,
+    impute_missing,
+    vcf2df,
+)
 
 warnings.filterwarnings("ignore")
 st.set_option('deprecation.showfileUploaderEncoding', False)
@@ -22,7 +32,7 @@ def main():
     readme_text = st.markdown(get_file_content_as_string("intro.md"))
 
     # get the 1000 genomes samples
-    dfsamples = get_1kg_samples()
+    dfsamples = get_1kg_samples_app()
 
     # Once we have the dependencies, add a selector for the app mode on the sidebar.
     st.sidebar.title("Visualization Settings")
@@ -32,18 +42,18 @@ def main():
         ("Kidd et al. 55 AISNPs", "Seldin et al. 128 AISNPs"),
     )
     if aisnp_set == "Kidd et al. 55 AISNPs":
-        aisnps_1kg = vcf2df("data/Kidd.55AISNP.1kG.vcf", dfsamples)
+        aisnps_1kg = vcf2df_app("data/Kidd.55AISNP.1kG.vcf", dfsamples)
     elif aisnp_set == "Seldin et al. 128 AISNPs":
-        aisnps_1kg = vcf2df("data/Seldin.128AISNP.1kG.vcf", dfsamples)
+        aisnps_1kg = vcf2df_app("data/Seldin.128AISNP.1kG.vcf", dfsamples)
 
     # Encode 1kg data
-    X_encoded, encoder = encode_genotypes(aisnps_1kg)
+    X_encoded, encoder = encode_genotypes_app(aisnps_1kg)
     # Dimensionality reduction
     dimensionality_reduction_method = st.sidebar.radio(
         "Dimensionality reduction technique:", ("PCA", "UMAP", "t-SNE")
     )
     # perform dimensionality reduction on the 1kg set
-    X_reduced, reducer = dimensionality_reduction(
+    X_reduced, reducer = dimensionality_reduction_app(
         X_encoded, algorithm=dimensionality_reduction_method
     )
 
@@ -69,7 +79,7 @@ def main():
             user_file = None
 
         # filter and encode the user record
-        user_record, aisnps_1kg = filter_user_genotypes(userdf, aisnps_1kg)
+        user_record, aisnps_1kg = filter_user_genotypes_app(userdf, aisnps_1kg)
         user_encoded = encoder.transform(user_record)
         X_encoded = np.concatenate((X_encoded, user_encoded))
         del userdf
@@ -141,116 +151,32 @@ def get_file_content_as_string(mdfile):
     return mdstring
 
 
-def get_1kg_samples():
-    """Download the sample information for the 1000 Genomes Project
-
-    :return: DataFrame of sample-level population information
-    :rtype: pandas DataFrame
-    """
-    onekg_samples = "data/integrated_call_samples_v3.20130502.ALL.panel"
-    dfsamples = pd.read_csv(onekg_samples, sep="\t")
-    dfsamples.set_index("sample", inplace=True)
-    dfsamples.drop(columns=["Unnamed: 4", "Unnamed: 5"], inplace=True)
-    dfsamples.columns = ["population", "super population", "gender"]
-    return dfsamples
+def get_1kg_samples_app(onekg_samples="data/integrated_call_samples_v3.20130502.ALL.panel"):
+    return get_1kg_samples(onekg_samples)
 
 
 @st.cache(show_spinner=True)
-def encode_genotypes(df):
-    """One-hot encode the genotypes
-
-    :param df: A DataFrame of samples with genotypes as columns
-    :type df: pandas DataFrame
-    :return: pandas DataFrame of one-hot encoded columns for genotypes and OHE instance
-    :rtype: pandas DataFrame, OneHotEncoder instance
-    """
-    ohe = OneHotEncoder(cols=df.columns, handle_missing="return_nan")
-    X = ohe.fit_transform(df)
-    return pd.DataFrame(X, index=df.index), ohe
+def encode_genotypes_app(df):
+    return encode_genotypes(df)
 
 
-def dimensionality_reduction(X, algorithm="PCA"):
-    """Reduce the dimensionality of the AISNPs
-    :param X: One-hot encoded 1kG AISNPs.
-    :type X: pandas DataFrame
-    :param algorithm: The type of dimensionality reduction to perform.
-        One of {PCA, UMAP, t-SNE}
-    :type algorithm: str
-    :returns: The transformed X DataFrame, reduced to 3 components by <algorithm>,
-    and the dimensionality reduction Transformer object.
-    """
-    n_components = 3
-
-    if algorithm == "PCA":
-        reducer = PCA(n_components=n_components)
-    elif algorithm == "t-SNE":
-        reducer = TSNE(n_components=n_components, n_jobs=4)
-    elif algorithm == "UMAP":
-        reducer = umap.UMAP(
-            n_components=n_components, min_dist=0.2, metric="dice", random_state=42
-        )
-    else:
-        return None, None
-
-    X_reduced = reducer.fit_transform(X.values)
-
-    return pd.DataFrame(X_reduced, columns=["x", "y", "z"], index=X.index), reducer
+def dimensionality_reduction_app(X, algorithm="PCA"):
+    return dimensionality_reduction(X, algorithm)
 
 
 @st.cache(show_spinner=True)
-def filter_user_genotypes(userdf, aisnps_1kg):
-    """Filter the user's uploaded genotypes to the AISNPs
-
-    :param userdf: The user's DataFrame from SNPs
-    :type userdf: pandas DataFrame
-    :param aisnps_1kg: The DataFrame containing snps for the 1kg project samples
-    :type aisnps_1kg: pandas DataFrame
-    :return: The user's DataFrame of AISNPs as columns, The 1kg DataFrame with user appended
-    :rtype: pandas DataFrame
-    """
-    user_record = pd.DataFrame(index=["your_sample"], columns=aisnps_1kg.columns)
-    for snp in user_record.columns:
-        try:
-            user_record[snp] = userdf.loc[snp]["genotype"]
-        except KeyError:
-            continue
-    aisnps_1kg = aisnps_1kg.append(user_record)
-    return user_record, aisnps_1kg
+def filter_user_genotypes_app(userdf, aisnps_1kg):
+    return filter_user_genotypes(userdf, aisnps_1kg)
 
 
 @st.cache(show_spinner=True)
-def impute_missing(aisnps_1kg):
-    """Use scikit-learns KNNImputer to impute missing genotypes for AISNPs
-
-    :param aisnps_1kg: DataFrame of all samples including user's encoded genotypes.
-    :type aisnps_1kg: pandas DataFrame
-    :return: DataFrame with nan values filled in my KNNImputer
-    :rtype: pandas DataFrame
-    """
-    imputer = KNNImputer(n_neighbors=9)
-    imputed_aisnps = imputer.fit_transform(aisnps_1kg)
-    return np.rint(imputed_aisnps[-1])
+def impute_missing_app(aisnps_1kg):
+    return impute_missing(aisnps_1kg)
 
 
 @st.cache
-def vcf2df(vcf_fname, dfsamples):
-    """Convert a vcf file (from the 1kg AISNPs) to a pandas DataFrame
-
-    :param vcf_fname: path to the vcf file with AISNPs for every 1kg sample
-    :type vcf_fname: str
-    :param dfsamples: DataFrame with sample-level info on each 1kg sample.
-    :type dfsamples: pandas DataFrame
-    :return: DataFrame with genotypes for AISNPs as columns and samples as rows.
-    :rtype: pandas DataFrame
-    """
-    vcf_file = VCF(vcf_fname)
-    df = pd.DataFrame(index=vcf_file.samples)
-    for variant in vcf_file():
-        df[variant.ID] = [gt.replace("|", "") for gt in variant.gt_bases]
-
-    df = df.join(dfsamples, how="outer")
-
-    return df
+def vcf2df_app(vcf_fname, dfsamples):
+    return vcf2df(vcf_fname, dfsamples)
 
 
 def plot_3d(X_reduced, dfsamples, pop):
