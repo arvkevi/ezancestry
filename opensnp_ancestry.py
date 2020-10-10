@@ -5,7 +5,7 @@ for each parsed file in the `openSNP <https://opensnp.org>`_ datadump.
 
 Notes
 -----
-Relative paths assume script is being run from analysis dir.
+Paths assume script is being run from `ezancestry` dir.
 """
 
 import logging
@@ -28,6 +28,7 @@ from util import (
     vcf2df,
 )
 
+DATA_DIR = "data"
 OUTPUT_DIR = "output"
 AISNP_SET = (
     "Kidd et al. 55 AISNPs"
@@ -36,9 +37,6 @@ DIMENSIONALITY_REDUCTION_ALGORITHM = "PCA"  # {"PCA", "UMAP", "t-SNE"}
 
 # create output directory for this example
 create_dir(OUTPUT_DIR)
-
-
-DATA_DIR = "data"
 
 # assume `opensnp_datadump.current.zip` is found at this location
 r = Resources(resources_dir=DATA_DIR)
