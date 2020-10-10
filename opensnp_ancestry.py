@@ -8,6 +8,7 @@ Notes
 Relative paths assume script is being run from analysis dir.
 """
 
+import logging
 import random
 
 import numpy as np
@@ -17,7 +18,7 @@ from snps import SNPs
 from snps.resources import Resources
 from snps.utils import Parallelizer, save_df_as_csv, create_dir
 
-from app import (
+from util import (
     get_1kg_samples,
     encode_genotypes,
     dimensionality_reduction,
@@ -35,8 +36,11 @@ DIMENSIONALITY_REDUCTION_ALGORITHM = "PCA"  # {"PCA", "UMAP", "t-SNE"}
 # create output directory for this example
 create_dir(OUTPUT_DIR)
 
+
+DATA_DIR = "data"
+
 # assume `opensnp_datadump.current.zip` is found at this location
-r = Resources(resources_dir="../data")
+r = Resources(resources_dir=DATA_DIR)
 
 
 def main():
@@ -46,33 +50,41 @@ def main():
     # draw a sample from the observations
     random.seed(1)
     SAMPLE_SIZE = len(filenames)
-    # SAMPLE_SIZE = 10
+    #SAMPLE_SIZE = 10
     samples = random.sample(range(len(filenames)), SAMPLE_SIZE)
 
     # get the 1000 genomes samples
-    dfsamples = get_1kg_samples("../data/integrated_call_samples_v3.20130502.ALL.panel")
+    dfsamples = get_1kg_samples(f"{DATA_DIR}/integrated_call_samples_v3.20130502.ALL.panel")
+    logging.info("retreived the 1kg samples")
 
     aisnps_1kg = (
-        vcf2df("../data/Kidd.55AISNP.1kG.vcf", dfsamples)
+        vcf2df(f"{DATA_DIR}/Kidd.55AISNP.1kG.vcf", dfsamples)
         if AISNP_SET == "Kidd et al. 55 AISNPs"
-        else vcf2df("../data/Seldin.128AISNP.1kG.vcf", dfsamples)
+        else vcf2df(f"{DATA_DIR}/Seldin.128AISNP.1kG.vcf", dfsamples)
     )
+    logging.info("made the AIsnp DataFrame")
 
     # Encode 1kg data
     X_encoded, encoder = encode_genotypes(aisnps_1kg)
+    logging.info("encoded the genotypes")
 
     # perform dimensionality reduction on the 1kg set
     X_reduced, reducer = dimensionality_reduction(
         X_encoded, algorithm=DIMENSIONALITY_REDUCTION_ALGORITHM
     )
+    logging.info("Reduced the dimensionality of the genotypes")
 
     # predicted population
     knn_super_pop = KNeighborsClassifier(n_neighbors=9, weights="distance", n_jobs=1)
     knn_pop = KNeighborsClassifier(n_neighbors=9, weights="distance", n_jobs=1)
 
     # fit the knn before adding the user sample
+    logging.info("Fitting the superpopulation model")
     knn_super_pop.fit(X_reduced, dfsamples["super population"])
+    logging.info("Done!")
+    logging.info("Fitting the population model")
     knn_pop.fit(X_reduced, dfsamples["population"])
+    logging.info("Done!")
 
     # setup tasks for parallelizing / execution on multiple cores
     p = Parallelizer(parallelize=True)
