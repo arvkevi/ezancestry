@@ -5,7 +5,7 @@ One Thousand Genomes Project -- Population Visualizations using Streamlit
 
 Visualize you genotypes at [http://ezancestry.herokuapp.com/](http://ezancestry.herokuapp.com/)
 
-![image](ezancestry.png)
+![image](images/ezancestry.png)
 
 ## Local Installation and Usage
 
@@ -61,3 +61,5 @@ Thanks to [Andrew Riha](https://github.com/apriha), it's easy to predict the anc
 1. Download the [data](https://opensnp.org/data/zip/opensnp_datadump.current.zip) to the `data` directory. It's a large zipped directory!
 2. Follow steps 1-5 above.
 3. Run `python opensnp_ancestry.py` and wait for the results.
+
+![openSNP](images/opensnp.predicted_ancestries.png)
