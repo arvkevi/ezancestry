@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
 import umap
+import vcf
 
 from category_encoders.one_hot import OneHotEncoder
-from cyvcf2 import VCF
-from MulticoreTSNE import MulticoreTSNE as TSNE
 from sklearn.decomposition import PCA
 from sklearn.impute import KNNImputer
+from sklearn.manifold import TSNE
 
 
 def get_file_content_as_string(mdfile):
@@ -121,10 +121,10 @@ def vcf2df(vcf_fname, dfsamples):
     :return: DataFrame with genotypes for AISNPs as columns and samples as rows.
     :rtype: pandas DataFrame
     """
-    vcf_file = VCF(vcf_fname)
+    vcf_file = vcf.Reader(open(vcf_fname, 'r'))
     df = pd.DataFrame(index=vcf_file.samples)
-    for variant in vcf_file():
-        df[variant.ID] = [gt.replace("|", "") for gt in variant.gt_bases]
+    for variant in vcf_file:
+        df[variant.ID] = [sample.gt_bases.replace("|", "") for sample in variant.samples]
 
     df = df.join(dfsamples, how="outer")
 

@@ -1,9 +1,7 @@
 category_encoders
-cmake
-cyvcf2
-MulticoreTSNE
 numpy
 pandas
+pyvcf
 plotly
 scikit-learn
 scipy
