@@ -24,7 +24,7 @@ from util import (
 )
 
 warnings.filterwarnings("ignore")
-st.set_option('deprecation.showfileUploaderEncoding', False)
+st.set_option("deprecation.showfileUploaderEncoding", False)
 
 
 def main():
@@ -83,9 +83,7 @@ def main():
         # filter and encode the user record
         user_record, aisnps_1kg = filter_user_genotypes_app(userdf, aisnps_1kg)
         user_n_missing = (
-            user_record.drop(
-                columns=["super population", "population", "gender"]
-            )
+            user_record.drop(columns=["super population", "population", "gender"])
             .isnull()
             .sum(axis=1)["your_sample"]
         )
@@ -166,7 +164,9 @@ def get_file_content_as_string(mdfile):
     return mdstring
 
 
-def get_1kg_samples_app(onekg_samples="data/integrated_call_samples_v3.20130502.ALL.panel"):
+def get_1kg_samples_app(
+    onekg_samples="data/integrated_call_samples_v3.20130502.ALL.panel",
+):
     return get_1kg_samples(onekg_samples)
 
 
