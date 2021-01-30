@@ -24,7 +24,7 @@ from util import (
 )
 
 warnings.filterwarnings("ignore")
-st.set_option('deprecation.showfileUploaderEncoding', False)
+st.set_option("deprecation.showfileUploaderEncoding", False)
 
 
 def main():
@@ -43,8 +43,10 @@ def main():
     )
     if aisnp_set == "Kidd et al. 55 AISNPs":
         aisnps_1kg = vcf2df_app("data/Kidd.55AISNP.1kG.vcf", dfsamples)
+        n_aisnps = 55
     elif aisnp_set == "Seldin et al. 128 AISNPs":
         aisnps_1kg = vcf2df_app("data/Seldin.128AISNP.1kG.vcf", dfsamples)
+        n_aisnps = 128
 
     # Encode 1kg data
     X_encoded, encoder = encode_genotypes_app(aisnps_1kg)
@@ -80,6 +82,11 @@ def main():
 
         # filter and encode the user record
         user_record, aisnps_1kg = filter_user_genotypes_app(userdf, aisnps_1kg)
+        user_n_missing = (
+            user_record.drop(columns=["super population", "population", "gender"])
+            .isnull()
+            .sum(axis=1)["your_sample"]
+        )
         user_encoded = encoder.transform(user_record)
         X_encoded = np.concatenate((X_encoded, user_encoded))
         del userdf
@@ -97,6 +104,12 @@ def main():
         # plot
         plotly_3d = plot_3d(X_reduced, dfsamples, population_level)
         st.plotly_chart(plotly_3d, user_container_width=True)
+
+        # missingness
+        st.subheader("Missing AIsnps")
+        st.text(
+            f"Your file upload was missing {user_n_missing} ({round((user_n_missing / n_aisnps) * 100, 1)}%) of the {n_aisnps} total AIsnps.\nThese locations were imputed during prediction."
+        )
 
         # predict the population for the user sample
         user_pop = knn.predict(user_reduced)[0]
@@ -151,7 +164,9 @@ def get_file_content_as_string(mdfile):
     return mdstring
 
 
-def get_1kg_samples_app(onekg_samples="data/integrated_call_samples_v3.20130502.ALL.panel"):
+def get_1kg_samples_app(
+    onekg_samples="data/integrated_call_samples_v3.20130502.ALL.panel",
+):
     return get_1kg_samples(onekg_samples)
 
 
