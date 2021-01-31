@@ -19,7 +19,7 @@ from snps import SNPs
 from snps.resources import Resources
 from snps.utils import Parallelizer, save_df_as_csv, create_dir
 
-from util import (
+from streamlit.util import (
     get_1kg_samples,
     encode_genotypes,
     dimensionality_reduction,
