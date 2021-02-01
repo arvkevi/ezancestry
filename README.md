@@ -1,7 +1,7 @@
 # ezancestry
 One Thousand Genomes Project -- Population Visualizations using Streamlit
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/arvkevi/ezancestry/streamlit-share/app.py)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/arvkevi/ezancestry/streamlit-share/streamlit/app.py)
 
 `ezancestry` is an interactive visualization app built in Python with [Streamlit](https://www.streamlit.io/) and deployed on [Heroku](https://heroku.com).
 
