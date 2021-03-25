@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import umap
-
 from category_encoders.one_hot import OneHotEncoder
 from cyvcf2 import VCF
 from MulticoreTSNE import MulticoreTSNE as TSNE

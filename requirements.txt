@@ -1,7 +1,8 @@
 category_encoders
 cmake
 cyvcf2
-MulticoreTSNE
+fire
+loguru
 numpy
 pandas
 plotly

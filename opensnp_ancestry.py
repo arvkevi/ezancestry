@@ -17,16 +17,11 @@ import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from snps import SNPs
 from snps.resources import Resources
-from snps.utils import Parallelizer, save_df_as_csv, create_dir
+from snps.utils import Parallelizer, create_dir, save_df_as_csv
 
-from streamlit.util import (
-    get_1kg_samples,
-    encode_genotypes,
-    dimensionality_reduction,
-    filter_user_genotypes,
-    impute_missing,
-    vcf2df,
-)
+from streamlit.util import (dimensionality_reduction, encode_genotypes,
+                            filter_user_genotypes, get_1kg_samples,
+                            impute_missing, vcf2df)
 
 DATA_DIR = "data"
 OUTPUT_DIR = "output"

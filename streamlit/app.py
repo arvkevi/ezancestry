@@ -3,9 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import plotly.express as px
-import streamlit as st
 import umap
-
 from category_encoders.one_hot import OneHotEncoder
 from cyvcf2 import VCF
 from MulticoreTSNE import MulticoreTSNE as TSNE
@@ -13,15 +11,11 @@ from sklearn.decomposition import PCA
 from sklearn.impute import KNNImputer
 from sklearn.neighbors import KNeighborsClassifier
 from snps import SNPs
+from util import (dimensionality_reduction, encode_genotypes,
+                  filter_user_genotypes, get_1kg_samples, impute_missing,
+                  vcf2df)
 
-from util import (
-    get_1kg_samples,
-    encode_genotypes,
-    dimensionality_reduction,
-    filter_user_genotypes,
-    impute_missing,
-    vcf2df,
-)
+import streamlit as st
 
 warnings.filterwarnings("ignore")
 st.set_option("deprecation.showfileUploaderEncoding", False)
