@@ -20,7 +20,6 @@ setup(
         ]
     },
     install_requires=[
-        "category_encoders",
         "fire",
         "loguru",
         "numpy",

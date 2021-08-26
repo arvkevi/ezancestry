@@ -2,6 +2,11 @@ import fire
 
 from ezancestry.aisnps import generate_aisnps
 
+# TODO User inputs are:
+# 23andMe (or other provider) file
+# Directory of 23andMe files
+# Pandas DataFrame or some other object?
+
 
 def main():
     fire.Fire(

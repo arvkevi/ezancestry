@@ -8,6 +8,7 @@ from loguru import logger
 from ezancestry.fetch import download_thousand_genomes
 from ezancestry.settings import aisnps_directory
 
+
 # Add additional aisnps here
 
 
@@ -25,7 +26,7 @@ def extract_kidd_aisnps(thousand_genomes_directory):
         df55 = pd.read_csv(kidd_aisnps_file, sep="\t")
     except FileNotFoundError:
         logger.error(
-            "Please pass the full path to the Kidd AISNPs file (Kidd_55_AISNPs.txt)"
+            "Please check the path to the Kidd AISNPs file (Kidd_55_AISNPs.txt)"
         )
         sys.exit(1)
 
@@ -70,7 +71,7 @@ def extract_seldin_aisnps(thousand_genomes_directory):
         df128 = pd.read_csv(seldin_aisnps_file, sep="\t")
     except FileNotFoundError:
         logger.error(
-            "Please pass the full path to the Kidd AISNPs file (report_Seldin_128_AISNPs.grch36.txt.xls')"
+            "Please check the path to the Kidd AISNPs file (report_Seldin_128_AISNPs.grch36.txt.xls')"
         )
         sys.exit(1)
 

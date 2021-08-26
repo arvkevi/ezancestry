@@ -2,11 +2,16 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
-from category_encoders.one_hot import OneHotEncoder
+
+from sklearn.preprocessing import OneHotEncoder
 from cyvcf2 import VCF
 from loguru import logger
 
-from ezancestry.settings import models_directory, samples_directory
+from ezancestry.settings import (
+    models_directory,
+    samples_directory,
+    aisnps_directory,
+)
 
 
 def get_1kg_labels():
@@ -42,42 +47,69 @@ def vcf2df(vcf_fname, dfsamples):
     vcf_file = VCF(vcf_fname)
     df = pd.DataFrame(index=vcf_file.samples)
     for variant in vcf_file():
-        df[variant.ID] = [gt.replace("|", "") for gt in variant.gt_bases]
+        # TODO: ensure un-phasing variants is the desired behavior
+        # sorted() normalizes the order of the genotypes
+        df[variant.ID] = [
+            "".join(sorted(gt.replace("|", ""))) for gt in variant.gt_bases
+        ]
 
     df = df.join(dfsamples, how="inner")
 
     return df
 
 
-def encode_genotypes(df, refit=False):
+def encode_genotypes(df, aisnps_set="Kidd", overwrite_encoder=False):
     """One-hot encode the genotypes
     :param df: A DataFrame of samples with genotypes as columns
     :type df: pandas DataFrame
-    :param refit: Flag whether or not to refit the encoder.
-    :type refit: bool
+    :param aisnps_set: One of either {Kidd, Seldin}
+    :type aisnps_set: str
+    :param overwrite_encoder: Flag whether or not to overwrite the saved encoder for the given aisnps_set. Default: False, will load the saved encoder model.
+    :type overwrite_encoder: bool
     :return: pandas DataFrame of one-hot encoded columns for genotypes and OHE instance
     :rtype: pandas DataFrame, OneHotEncoder instance
     """
-    columns = [
-        col
-        for col in df.columns
-        if col not in ("gender", "population", "super population")
-    ]
-    if refit:
+    aisnps_set = aisnps_set.upper()
+    try:
+        aisnps = pd.read_csv(
+            aisnps_directory.joinpath(f"thousand_genomes.{aisnps_set}.dataframe.csv"),
+            nrows=0,
+            index_col=0,
+        ).drop(columns=["population", "super population", "gender"])
+    except FileNotFoundError:
+        logger.critical("""aisnps_set must be either "Kidd" or "Seldin".""")
+        return
+
+    # concact will add snps (columns) to the df that aren't in the user-submitted
+    # df. Then drop the snps (columns) that are in the user-submitted df, but not
+    # in the aisnps set.
+    df = pd.concat([aisnps, df])[aisnps.columns]
+
+    if overwrite_encoder:
+        # TODO: handle_unknown sets novel genotypes to all zeros for each category.
+        # 1. Use a different encoder technique (OHE works for now)
+        # 2. Pass a list of valid genotypes (overkill, dimensionality explodes)
         ohe = OneHotEncoder(
-            cols=columns, handle_missing="return_nan", use_cat_names=True
+            sparse=False,
+            handle_unknown="ignore",
         )
-        X = ohe.fit_transform(df)
-        # overwrite the old encoder with the new one
-        joblib.dump(ohe, models_directory.joinpath("one_hot_encoder.bin"))
+        X = ohe.fit_transform(df.values)
+        # overwrite the old encoder with a new one
+        joblib.dump(
+            ohe, models_directory.joinpath(f"one_hot_encoder.{aisnps_set}.bin")
+        )
         logger.info(
-            "Wrote a new encoder to models_directory/one_hot_encoder.bin"
+            f"Wrote a new encoder to {models_directory}/one_hot_encoder.{aisnps_set}.bin"
         )
     else:
-        ohe = joblib.load(models_directory.joinpath("one_hot_encoder.bin"))
-        logger.info(
-            "Successfully loaded an encoder from models_directory/one_hot_encoder.bin"
+        ohe = joblib.load(
+            models_directory.joinpath(f"one_hot_encoder.{aisnps_set}.bin")
         )
-        X = ohe.fit_transform(df)
+        logger.info(
+            f"Successfully loaded an encoder from {models_directory}/one_hot_encoder.{aisnps_set}.bin"
+        )
+        X = ohe.transform(df.values)
 
-    return pd.DataFrame(X, index=df.index)
+    return pd.DataFrame(
+        X, index=df.index, columns=ohe.get_feature_names(df.columns.tolist())
+    )
