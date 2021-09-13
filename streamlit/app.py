@@ -77,7 +77,9 @@ def main():
         # filter and encode the user record
         user_record, aisnps_1kg = filter_user_genotypes_app(userdf, aisnps_1kg)
         user_n_missing = (
-            user_record.drop(columns=["super population", "population", "gender"])
+            user_record.drop(
+                columns=["super population", "population", "gender"]
+            )
             .isnull()
             .sum(axis=1)["your_sample"]
         )
@@ -119,7 +121,9 @@ def main():
 
         show_user_gts = st.sidebar.checkbox("Show Your Genotypes")
         if show_user_gts:
-            user_table_title = "Genotypes of Ancestry-Informative SNPs in Your Sample"
+            user_table_title = (
+                "Genotypes of Ancestry-Informative SNPs in Your Sample"
+            )
             st.subheader(user_table_title)
             st.dataframe(user_record)
 
@@ -131,9 +135,7 @@ def main():
     # Collapsable 1000 Genomes sample table
     show_1kg = st.sidebar.checkbox("Show 1k Genomes Genotypes")
     if show_1kg is True:
-        table_title = (
-            "Genotypes of Ancestry-Informative SNPs in 1000 Genomes Project Samples"
-        )
+        table_title = "Genotypes of Ancestry-Informative SNPs in 1000 Genomes Project Samples"
         with st.spinner("Loading 1k Genomes DataFrame"):
             st.subheader(table_title)
             st.dataframe(aisnps_1kg)
@@ -226,7 +228,13 @@ def plot_3d(X_reduced, dfsamples, pop):
         height=600,
         size="size",
         opacity=0.95,
-        color_discrete_sequence=["#008fd5", "#fc4f30", "#e5ae38", "#6d904f", "#810f7c"],
+        color_discrete_sequence=[
+            "#008fd5",
+            "#fc4f30",
+            "#e5ae38",
+            "#6d904f",
+            "#810f7c",
+        ],
     )
     if "me" not in dfsamples.index.tolist():
         fig.update_traces(marker=dict(size=2))

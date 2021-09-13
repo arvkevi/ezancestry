@@ -1,20 +1,22 @@
+import warnings
 from pathlib import Path
 
 import joblib
 import pandas as pd
-
-from sklearn.preprocessing import OneHotEncoder
 from cyvcf2 import VCF
 from loguru import logger
+from sklearn.preprocessing import OneHotEncoder
+from snps import SNPs
 
-from ezancestry.settings import (
-    models_directory,
-    samples_directory,
-    aisnps_directory,
-)
+from ezancestry.config import aisnps_directory as _aisnps_directory
+from ezancestry.config import aisnps_set as _aisnps_set
+from ezancestry.config import models_directory as _models_directory
+from ezancestry.config import samples_directory as _samples_directory
+
+warnings.simplefilter(action="ignore", category=pd.errors.DtypeWarning)
 
 
-def get_1kg_labels():
+def get_1kg_labels(samples_directory=None):
     """
     Get the ancestry labels for the 1000 Genomes Project samples.
 
@@ -23,6 +25,9 @@ def get_1kg_labels():
     :return: DataFrame of sample-level population information
     :rtype: pandas DataFrame
     """
+    if samples_directory is None:
+        samples_directory = _samples_directory
+
     dfsamples = pd.read_csv(
         Path(samples_directory).joinpath(
             "integrated_call_samples_v3.20130502.ALL.panel"
@@ -31,7 +36,7 @@ def get_1kg_labels():
     )
     dfsamples.set_index("sample", inplace=True)
     dfsamples.drop(columns=["Unnamed: 4", "Unnamed: 5"], inplace=True)
-    dfsamples.columns = ["population", "super population", "gender"]
+    dfsamples.columns = ["population", "superpopulation", "gender"]
     return dfsamples
 
 
@@ -58,7 +63,13 @@ def vcf2df(vcf_fname, dfsamples):
     return df
 
 
-def encode_genotypes(df, aisnps_set="Kidd", overwrite_encoder=False):
+def encode_genotypes(
+    df,
+    aisnps_set="Kidd",
+    overwrite_encoder=False,
+    models_directory=None,
+    aisnps_directory=None,
+):
     """One-hot encode the genotypes
     :param df: A DataFrame of samples with genotypes as columns
     :type df: pandas DataFrame
@@ -66,16 +77,31 @@ def encode_genotypes(df, aisnps_set="Kidd", overwrite_encoder=False):
     :type aisnps_set: str
     :param overwrite_encoder: Flag whether or not to overwrite the saved encoder for the given aisnps_set. Default: False, will load the saved encoder model.
     :type overwrite_encoder: bool
+    :param models_directory: Path to the directory where the saved encoder model is saved. Default: None, will use the default location.
+    :type models_directory: str
+    :param aisnps_directory: Path to the directory where the AISNPs are saved. Default: None, will use the default location.
+    :type aisnps_directory: str
     :return: pandas DataFrame of one-hot encoded columns for genotypes and OHE instance
     :rtype: pandas DataFrame, OneHotEncoder instance
     """
+
+    if models_directory is None:
+        models_directory = _models_directory
+    if aisnps_directory is None:
+        aisnps_directory = _aisnps_directory
+
+    models_directory = Path(models_directory)
+    aisnps_directory = Path(aisnps_directory)
+
     aisnps_set = aisnps_set.upper()
     try:
         aisnps = pd.read_csv(
-            aisnps_directory.joinpath(f"thousand_genomes.{aisnps_set}.dataframe.csv"),
+            aisnps_directory.joinpath(
+                f"thousand_genomes.{aisnps_set}.dataframe.csv"
+            ),
             nrows=0,
             index_col=0,
-        ).drop(columns=["population", "super population", "gender"])
+        ).drop(columns=["population", "superpopulation", "gender"])
     except FileNotFoundError:
         logger.critical("""aisnps_set must be either "Kidd" or "Seldin".""")
         return
@@ -85,8 +111,11 @@ def encode_genotypes(df, aisnps_set="Kidd", overwrite_encoder=False):
     # in the aisnps set.
     df = pd.concat([aisnps, df])[aisnps.columns]
 
+    # TODO: Impute missing values
+    # imputer = KNNImputer(n_neighbors=9)
+    # imputed_aisnps = imputer.fit_transform(df)
+
     if overwrite_encoder:
-        # TODO: handle_unknown sets novel genotypes to all zeros for each category.
         # 1. Use a different encoder technique (OHE works for now)
         # 2. Pass a list of valid genotypes (overkill, dimensionality explodes)
         ohe = OneHotEncoder(
@@ -113,3 +142,126 @@ def encode_genotypes(df, aisnps_set="Kidd", overwrite_encoder=False):
     return pd.DataFrame(
         X, index=df.index, columns=ohe.get_feature_names(df.columns.tolist())
     )
+
+
+def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
+    """Process the user-submitted input data.
+
+    :param input_data: [description]
+    :type input_data: [type]
+    :param aisnps_directory: [description], defaults to None
+    :type aisnps_directory: [type], optional
+    :param aisnps_set: [description], defaults to None
+    :type aisnps_set: [type], optional
+    :return: DataFrame where samples are row and genotypes are columns
+    :rtype: pandas DataFrame
+    """
+    if aisnps_directory is None:
+        aisnps_directory = _aisnps_directory
+    if aisnps_set is None:
+        aisnps_set = _aisnps_set
+
+    aisnps_directory = Path(aisnps_directory)
+
+    aisnpsdf = pd.read_csv(
+        aisnps_directory.joinpath(f"{aisnps_set}.AISNP.txt"),
+        dtype={"rsid": str, "chromosome": str, "position_hg19": int},
+        sep="\t",
+    )
+
+    # If the user-submitted input ata is a directory, loop over all the files
+    # to create a DataFrame of all the input data.
+    if Path(input_data).is_dir():
+        snpsdf = pd.DataFrame(
+            columns=[
+                col
+                for col in aisnpsdf.columns
+                if col not in ["rsid", "chromosome", "position_hg19"]
+            ]
+        )
+        for filepath in Path(input_data).iterdir():
+            try:
+                snpsdf = pd.concat(
+                    [snpsdf, _file_to_dataframe(filepath, aisnpsdf)]
+                )
+            except Exception as e:
+                logger.debug(e)
+                logger.warning(f"Skipping {filepath} because it was not valid")
+
+    # The user-submitted input data is a single file.
+    else:
+        # _file_to_dataframe needs a Path object
+        input_data = Path(input_data)
+        try:
+            snpsdf = _file_to_dataframe(input_data, aisnpsdf)
+            # SNPs will try to read the DataFrame file
+            if snpsdf is not None:
+                return snpsdf
+            logger.debug(
+                "input_data is not a valid SNPs format, that's ok, trying to read as a pre-formatted DataFrame"
+            )
+        except:
+            logger.debug(
+                "input_data is not a valid SNPs format, that's ok, trying to read as a pre-formatted DataFrame"
+            )
+        try:
+            snpsdf = pd.read_csv(
+                input_data, index_col=0, sep=None, engine="python", dtype=str
+            )
+            # Need to clean up the dataframe if there is extra stuff in it
+            # keep the first column, it's the index
+            cols_to_keep = [snpsdf.columns[0]]
+            for col in snpsdf.columns[1:]:
+                if col.startswith("rs"):
+                    cols_to_keep.append(col)
+            return snpsdf[cols_to_keep]
+        except:
+            raise ValueError(
+                f"{input_data} is not a valid file or directory. Please provide a valid file or directory."
+            )
+    return snpsdf
+
+
+def _file_to_dataframe(filename, aisnpsdf):
+    """Reads one file and returns a pandas DataFrame.
+
+    :param aisnpsdf: A DataFrame of AISNPs
+    :type aisnpsdf: pandas DataFrame
+    :param filename: Path object to the file to be read
+    :type filename: Path
+    :return: A DataFrame of one record and many columns for each AISNP.
+    :rtype: pandas DataFrame
+    """
+    # try to read a single file
+    try:
+        snpsobj = SNPs(str(filename))
+        if snpsobj.count == 0:
+            return None
+        else:
+            snpsdf = snpsobj.snps
+        snpsdf = snpsdf.reset_index()
+        snpsdf.rename(
+            columns={"chrom": "chromosome", "pos": "position_hg19"},
+            inplace=True,
+        )
+        # subset to AISNPs
+        snpsdf = aisnpsdf.merge(
+            snpsdf, on=["rsid", "chromosome", "position_hg19"], how="left"
+        )
+        # inform user how many missing snps
+        n_aisnps = snpsdf["genotype"].notnull().sum()
+        n_aisnps_total = snpsdf.shape[0]
+        logger.info(
+            f"{filename.name} sample has a valid genotype for {n_aisnps} out of a possible {n_aisnps_total} ({(n_aisnps / n_aisnps_total) * 100}%)"
+        )
+
+        snpsdfT = pd.DataFrame(columns=snpsdf["rsid"].tolist())
+        snpsdfT.loc[filename.name] = snpsdf["genotype"].tolist()
+
+        return snpsdfT
+
+    except FileNotFoundError:
+        logger.critical(f"Could not find file {filename}")
+
+    except Exception as e:
+        logger.debug(e)

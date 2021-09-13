@@ -5,102 +5,114 @@ import pandas as pd
 from cyvcf2 import VCF, Writer
 from loguru import logger
 
+from ezancestry.config import aisnps_directory as _aisnps_directory
+from ezancestry.config import aisnps_set as _aisnps_set
+from ezancestry.config import data_directory as _data_directory
+from ezancestry.config import \
+    thousand_genomes_directory as _thousand_genomes_directory
 from ezancestry.fetch import download_thousand_genomes
-from ezancestry.settings import aisnps_directory
 
 
-# Add additional aisnps here
-
-
-def extract_kidd_aisnps(thousand_genomes_directory):
-    """Extracts ancestry-informative snps from the 1000 genomes bcf files.
-    Writes a .vcf file of 1000 Genomes snps from only the AISNP locations
-    defined by Kidd et al.
+def extract_aisnps(
+    thousand_genomes_directory=None,
+    aisnps_file=None,
+    aisnps_set=None,
+    aisnps_directory=None,
+):
+    """Extract the AISNP SNPs from the 1000 Genomes data. The thosuand_genomes_directory must be populated with data.
 
     :param thousand_genomes_directory: Full path to the directory where the 1000 genomes bcf files are located.
     :type thousand_genomes_directory: str
+    :param aisnps_file: Full path to the file containing the AISNP SNPs.
+    :type aisnps_file: str
+    :param aisnps_set: Which set of AISNP SNPs to extract.
+    :type aisnps_set: str
+    :param aisnps_directory: Full path to the directory where the AISNP SNPs will be written.
+    :type aisnps_directory: str
     """
-    # read the AISNP genomic locations defined by Kidd et al
-    kidd_aisnps_file = aisnps_directory.joinpath("Kidd_55_AISNPs.txt")
+
+    # default to the config if None
+    if thousand_genomes_directory is None:
+        thousand_genomes_directory = _thousand_genomes_directory
+    thousand_genomes_directory = Path(thousand_genomes_directory)
+
+    if aisnps_directory is None:
+        aisnps_directory = _aisnps_directory
+    aisnps_directory = Path(aisnps_directory)
+
+    if aisnps_file is None:
+        aisnps_file = aisnps_directory.joinpath(f"{aisnps_set}.AISNP.txt")
+        logger.info(f"Using: {aisnps_set}.AISNP.txt")
+    if aisnps_set is None:
+        aisnps_set = _aisnps_set
+
+    # read the AISNP file
     try:
-        df55 = pd.read_csv(kidd_aisnps_file, sep="\t")
+        df = pd.read_csv(aisnps_file, sep="\t", dtype=str)
     except FileNotFoundError:
         logger.error(
-            "Please check the path to the Kidd AISNPs file (Kidd_55_AISNPs.txt)"
+            "Please check the path to the AISNPs file (KIDD.AISNP.txt)"
         )
         sys.exit(1)
 
-    bcf_fname = "ALL.chr{}.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.bcf".format(
-        1
+    logger.info(
+        f"Looking for 1000 genomes data in: {thousand_genomes_directory}"
     )
-    bcf_file = Path(thousand_genomes_directory).joinpath(bcf_fname)
+    bcf_fname = f"ALL.chr{1}.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.bcf"
+    bcf_file = thousand_genomes_directory.joinpath(bcf_fname)
     bcf = VCF(bcf_file)
-    outfile = aisnps_directory.joinpath("Kidd.55AISNP.1kG.vcf")
+    outfile = aisnps_directory.joinpath(f"{aisnps_set}.AISNP.1kG.vcf")
     w = Writer(outfile, bcf)
-    for _, aim in df55.iterrows():
-        chrom = str(aim["Chr"])
-        pos = str(aim["Build 37 nt position"])
-        pos = pos.replace(",", "")
-        rsid = str(aim["dbSNP rs#"])
-        bcf_fname = "ALL.chr{}.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.bcf".format(
-            chrom
-        )
-        bcf_file = Path(thousand_genomes_directory).joinpath(bcf_fname)
+    for _, aim in df.iterrows():
+        rsid = aim["rsid"]
+        chrom = aim["chromosome"]
+        pos = aim["position_hg19"]
+        bcf_fname = f"ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.bcf"
+        bcf_file = thousand_genomes_directory.joinpath(bcf_fname)
         bcf = VCF(bcf_file)
+        snp_writer = 0
         for variant in bcf("{}:{}-{}".format(chrom, pos, pos)):
             if variant.POS == int(pos):
                 w.write_record(variant)
+                snp_writer += 1
+        if snp_writer == 0:
+            logger.warning(
+                f"Couldn't find {rsid} on chromosome {chrom} position {pos}"
+            )
     w.close()
     bcf.close()
-    logger.info("Successfully wrote Kidd.55AISNP.1kG.vcf")
+    logger.info(f"Successfully wrote {aisnps_set}.AISNP.1kG.vcf")
 
 
-def extract_seldin_aisnps(thousand_genomes_directory):
-    """Extracts ancestry-informative snps from the 1000 genomes bcf files.
-    Writes a .vcf file of 1000 Genomes snps from only the AISNP locations
-    defined by Seldin et al.
+def _generate_aisnps(
+    thousand_genomes_directory=None, aisnps_set=None, aisnps_directory=None
+):
+    """A utility function to download the 1000 Genomes data, if necessary. Then create the AISNPs vcf files.
 
     :param thousand_genomes_directory: Full path to the directory where the 1000 genomes bcf files are located.
-    :type data_directory: str
+    :type thousand_genomes_directory: str
+    :param aisnps_set: Which set of AISNP SNPs to extract.
+    :type aisnps_set: str
+    :param aisnps_directory: Full path to the directory where the AISNP SNPs will be written.
+    :type aisnps_directory: str
     """
-    # read the AISNP genomic locations defined by Kidd et al
-    seldin_aisnps_file = aisnps_directory.joinpath(
-        "report_Seldin_128_AISNPs.grch36.txt.xls"
-    )
-    try:
-        df128 = pd.read_csv(seldin_aisnps_file, sep="\t")
-    except FileNotFoundError:
-        logger.error(
-            "Please check the path to the Kidd AISNPs file (report_Seldin_128_AISNPs.grch36.txt.xls')"
-        )
-        sys.exit(1)
 
-    bcf_fname = f"ALL.chr{1}.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.bcf"
-    bcf_file = Path(thousand_genomes_directory).joinpath(bcf_fname)
-    bcf = VCF(bcf_file)
-    outfile = aisnps_directory.joinpath("Seldin.128AISNP.1kG.vcf")
-    w = Writer(outfile, bcf)
-    for _, aim in df128.iterrows():
-        chrom = aim["source_id"]
-        pos = aim["mapped_start"]
-        bcf_fname = f"ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.bcf"
+    # default to the config if None
+    if thousand_genomes_directory is None:
+        thousand_genomes_directory = _thousand_genomes_directory
+    if aisnps_directory is None:
+        aisnps_directory = _aisnps_directory
+    if aisnps_set is None:
+        aisnps_set = _aisnps_set
 
-        bcf_file = Path(thousand_genomes_directory).joinpath(bcf_fname)
-        bcf = VCF(bcf_file)
-        for variant in bcf(f"{chrom}:{pos}-{pos}"):
-            if variant.POS == int(pos):
-                w.write_record(variant)
-    w.close()
-    bcf.close()
-    logger.info("Successfully wrote Seldin.128AISNP.1kG.vcf")
-
-
-def generate_aisnps(thousand_genomes_directory):
-    """Download the 1000 Genomes data, if necessary. Then create the AISNPs vcf files.
-
-    :param bcf_directory: Full path to the directory where the 1000 genomes bcf files are located.
-    :type data_directory: str
-    """
     download_thousand_genomes(thousand_genomes_directory)
-    extract_kidd_aisnps(thousand_genomes_directory)
-    extract_seldin_aisnps(thousand_genomes_directory)
+    extract_aisnps(
+        thousand_genomes_directory,
+        aisnps_directory=aisnps_directory,
+        aisnps_set="Kidd",
+    )
+    extract_aisnps(
+        thousand_genomes_directory,
+        aisnps_directory=aisnps_directory,
+        aisnps_set="Seldin",
+    )
