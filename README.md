@@ -19,7 +19,7 @@ ezancestry ships with pretrained k-nearest neighbor models for all combinations 
     * neighborhood component analysis (NCA)
     * uniform manifold approximation and projection (UMAP)
 
-# gif of ezanestry predict and plot
+![image](images/ezancestry.gif)
 
 ## Table of Contents
 
