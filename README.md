@@ -8,6 +8,7 @@ The subset of `SNPs`, AISNPs (ancestry-informative snps), were chosen from two p
   * Set of 128 AISNPs. [Ancestry informative marker sets for determining continental origin and admixture proportions in common populations in America.](https://www.ncbi.nlm.nih.gov/pubmed?cmd=Retrieve&dopt=citation&list_uids=18683858). Kosoy et al. 2009 (Seldin Lab)
 
 ezancestry ships with pretrained k-nearest neighbor models for all combinations of following:
+
     * Kidd (55 AISNPs)
     * Seldin (128 AISNPs)
     
@@ -208,6 +209,7 @@ ezancestry build-model --aisnps-set=custom
 
 ### Python API
 
+See the [notebook](github.com/arvkevi/ezancestry/ezancestry_library_tutorial.ipynb)
 
 ### Visualization
 
