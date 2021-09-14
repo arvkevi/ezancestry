@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ezancestry"
-version = "0.0.1"
+version = "0.0.2"
 description = "Easily predict and visualize genetic ancestry. Evaluate custom ancestry-informative SNP sets."
 authors = ["arvkevi <arvkevi@gmail.com>"]
 license = "MIT"
