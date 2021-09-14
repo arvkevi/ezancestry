@@ -5,7 +5,7 @@ description = "Easily predict and visualize genetic ancestry. Evaluate custom an
 authors = ["arvkevi <arvkevi@gmail.com>"]
 license = "MIT"
 packages = [
-    { include = "*", from = "data" },
+    { include = "data/**/*" },
     { include = "ezancestry" },
 ]
 readme = "README.md"
