@@ -44,12 +44,12 @@ Install ezancestry with pip:
 pip install ezancestry
 ```
 
-Or clone the repository and run `python setup.py install`:
+Or clone the repository and run `pip install` from the directory:
 
 ```shell
 git clone git@github.com:arvkevi/ezancestry.git
 cd ezancestry
-python setup.py install
+pip install .
 ```
 
 ## Config
