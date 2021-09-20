@@ -256,9 +256,11 @@ def _input_to_dataframe(input_data, aisnpsdf):
             snpsdf = snpsobj.snps
         except FileNotFoundError:
             logger.critical(f"Could not find file {input_data}")
+        sample_id = Path(input_data).name
 
     else:
         snpsdf = input_data
+        sample_id = "sample"
 
     snpsdf = snpsdf.reset_index()
     snpsdf.rename(
@@ -273,10 +275,10 @@ def _input_to_dataframe(input_data, aisnpsdf):
     n_aisnps = snpsdf["genotype"].notnull().sum()
     n_aisnps_total = snpsdf.shape[0]
     logger.info(
-        f"Sample has a valid genotype for {n_aisnps} out of a possible {n_aisnps_total} ({(n_aisnps / n_aisnps_total) * 100}%)"
+        f"{sample_id} has a valid genotype for {n_aisnps} out of a possible {n_aisnps_total} ({(n_aisnps / n_aisnps_total) * 100}%)"
     )
 
     snpsdfT = pd.DataFrame(columns=snpsdf["rsid"].tolist())
-    snpsdfT.loc["sample"] = snpsdf["genotype"].tolist()
+    snpsdfT.loc[sample_id] = snpsdf["genotype"].tolist()
 
     return snpsdfT
