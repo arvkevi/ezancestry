@@ -152,7 +152,7 @@ This writes a file, `predictions.csv` to the `output_directory` (defaults to cur
 ezancestry predict mygenome.txt
 ```
 
-**Directory of direct-to-consumer genetic data files**:
+**Directory of direct-to-consumer genetic data files or .vcf files**:
 
 ```shell
 ezancestry predict /path/to/genetic_datafiles

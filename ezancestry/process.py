@@ -168,100 +168,115 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
         dtype={"rsid": str, "chromosome": str, "position_hg19": int},
         sep="\t",
     )
+    
+    try:
+        input_data_is_pathlike = bool(Path(input_data))
+    except TypeError:
+        input_data_is_pathlike = False
 
     # If the user-submitted input ata is a directory, loop over all the files
     # to create a DataFrame of all the input data.
-    if Path(input_data).is_dir():
-        snpsdf = pd.DataFrame(
-            columns=[
-                col
-                for col in aisnpsdf.columns
-                if col not in ["rsid", "chromosome", "position_hg19"]
-            ]
-        )
-        for filepath in Path(input_data).iterdir():
+    if input_data_is_pathlike:
+        if Path(input_data).is_dir():
+            snpsdf = pd.DataFrame(
+                columns=[
+                    col
+                    for col in aisnpsdf.columns
+                    if col not in ["rsid", "chromosome", "position_hg19"]
+                ]
+            )
+            for filepath in Path(input_data).iterdir():
+                try:
+                    snpsdf = pd.concat(
+                        [snpsdf, _input_to_dataframe(filepath, aisnpsdf)]
+                    )
+                except Exception as e:
+                    logger.debug(e)
+                    logger.warning(f"Skipping {filepath} because it was not valid")
+        
+            return snpsdf
+
+        # The user-submitted input data is a single file.
+        else:
+            # _input_to_dataframe needs a Path object
+            input_data = Path(input_data)
             try:
-                snpsdf = pd.concat(
-                    [snpsdf, _file_to_dataframe(filepath, aisnpsdf)]
+                snpsdf = _input_to_dataframe(input_data, aisnpsdf)
+                # SNPs will try to read the DataFrame file
+                if snpsdf is not None:
+                    return snpsdf
+                logger.debug(
+                    "input_data is not a valid SNPs format, that's ok, trying to read as a pre-formatted DataFrame"
                 )
             except Exception as e:
                 logger.debug(e)
-                logger.warning(f"Skipping {filepath} because it was not valid")
-
-    # The user-submitted input data is a single file.
+            # read the user-submitted preformatted data as a DataFrame
+            try:
+                snpsdf = pd.read_csv(
+                    input_data, index_col=0, sep=None, engine="python", dtype=str
+                )
+                # Need to clean up the dataframe if there is extra stuff in it
+                # keep the first column, it's the index
+                cols_to_keep = [snpsdf.columns[0]]
+                for col in snpsdf.columns[1:]:
+                    if col.startswith("rs"):
+                        cols_to_keep.append(col)
+                return snpsdf[cols_to_keep]
+            except:
+                raise ValueError(
+                    f"{input_data} is not a valid file or directory. Please provide a valid file or directory."
+                )
     else:
-        # _file_to_dataframe needs a Path object
-        input_data = Path(input_data)
-        try:
-            snpsdf = _file_to_dataframe(input_data, aisnpsdf)
-            # SNPs will try to read the DataFrame file
-            if snpsdf is not None:
-                return snpsdf
-            logger.debug(
-                "input_data is not a valid SNPs format, that's ok, trying to read as a pre-formatted DataFrame"
-            )
-        except:
-            logger.debug(
-                "input_data is not a valid SNPs format, that's ok, trying to read as a pre-formatted DataFrame"
-            )
-        try:
-            snpsdf = pd.read_csv(
-                input_data, index_col=0, sep=None, engine="python", dtype=str
-            )
-            # Need to clean up the dataframe if there is extra stuff in it
-            # keep the first column, it's the index
-            cols_to_keep = [snpsdf.columns[0]]
-            for col in snpsdf.columns[1:]:
-                if col.startswith("rs"):
-                    cols_to_keep.append(col)
-            return snpsdf[cols_to_keep]
-        except:
-            raise ValueError(
-                f"{input_data} is not a valid file or directory. Please provide a valid file or directory."
-            )
+        snpsdf = _input_to_dataframe(input_data, aisnpsdf)
+    
     return snpsdf
 
 
-def _file_to_dataframe(filename, aisnpsdf):
+def _input_to_dataframe(input_data, aisnpsdf):
     """Reads one file and returns a pandas DataFrame.
 
     :param aisnpsdf: A DataFrame of AISNPs
     :type aisnpsdf: pandas DataFrame
-    :param filename: Path object to the file to be read
-    :type filename: Path
+    :param input_data: Path object to the file to be read or a SNPs DataFrame
+    :type input_data: Path
     :return: A DataFrame of one record and many columns for each AISNP.
     :rtype: pandas DataFrame
     """
     # try to read a single file
     try:
-        snpsobj = SNPs(str(filename))
-        if snpsobj.count == 0:
-            return None
-        else:
+        is_pathlike = bool(Path(input_data))
+    except TypeError:
+        is_pathlike = False
+    if is_pathlike:     
+        try:
+            snpsobj = SNPs(str(input_data))
+            if snpsobj.count == 0:
+                logger.debug(f"No snps found in the input_data")
+                return None
             snpsdf = snpsobj.snps
-        snpsdf = snpsdf.reset_index()
-        snpsdf.rename(
-            columns={"chrom": "chromosome", "pos": "position_hg19"},
-            inplace=True,
-        )
-        # subset to AISNPs
-        snpsdf = aisnpsdf.merge(
-            snpsdf, on=["rsid", "chromosome", "position_hg19"], how="left"
-        )
-        # inform user how many missing snps
-        n_aisnps = snpsdf["genotype"].notnull().sum()
-        n_aisnps_total = snpsdf.shape[0]
-        logger.info(
-            f"{filename.name} sample has a valid genotype for {n_aisnps} out of a possible {n_aisnps_total} ({(n_aisnps / n_aisnps_total) * 100}%)"
-        )
+        except FileNotFoundError:
+            logger.critical(f"Could not find file {input_data}")
 
-        snpsdfT = pd.DataFrame(columns=snpsdf["rsid"].tolist())
-        snpsdfT.loc[filename.name] = snpsdf["genotype"].tolist()
+    else:
+        snpsdf = input_data
 
-        return snpsdfT
+    snpsdf = snpsdf.reset_index()
+    snpsdf.rename(
+        columns={"chrom": "chromosome", "pos": "position_hg19"},
+        inplace=True,
+    )
+    # subset to AISNPs
+    snpsdf = aisnpsdf.merge(
+        snpsdf, on=["rsid", "chromosome", "position_hg19"], how="left"
+    )
+    # inform user how many missing snps
+    n_aisnps = snpsdf["genotype"].notnull().sum()
+    n_aisnps_total = snpsdf.shape[0]
+    logger.info(
+        f"Sample has a valid genotype for {n_aisnps} out of a possible {n_aisnps_total} ({(n_aisnps / n_aisnps_total) * 100}%)"
+    )
 
-    except FileNotFoundError:
-        logger.critical(f"Could not find file {filename}")
+    snpsdfT = pd.DataFrame(columns=snpsdf["rsid"].tolist())
+    snpsdfT.loc["sample"] = snpsdf["genotype"].tolist()
 
-    except Exception as e:
-        logger.debug(e)
+    return snpsdfT
