@@ -9,6 +9,7 @@ import typer
 from loguru import logger
 from sklearn.model_selection import train_test_split
 
+from ezancestry import super_pop_codes, pop_codes
 from ezancestry.aisnps import extract_aisnps
 from ezancestry.config import aisnps_directory as _aisnps_directory
 from ezancestry.config import aisnps_set as _aisnps_set
@@ -18,14 +19,19 @@ from ezancestry.config import models_directory as _models_directory
 from ezancestry.config import n_components as _n_components
 from ezancestry.config import population_level as _population_level
 from ezancestry.config import samples_directory as _samples_directory
-from ezancestry.config import \
-    thousand_genomes_directory as _thousand_genomes_directory
+from ezancestry.config import (
+    thousand_genomes_directory as _thousand_genomes_directory,
+)
 from ezancestry.dimred import dimensionality_reduction
 from ezancestry.evaluate import export_performance
 from ezancestry.fetch import download_thousand_genomes
 from ezancestry.model import predict_ancestry, train
-from ezancestry.process import (encode_genotypes, get_1kg_labels,
-                                process_user_input, vcf2df)
+from ezancestry.process import (
+    encode_genotypes,
+    get_1kg_labels,
+    process_user_input,
+    vcf2df,
+)
 
 
 class PopulationLevel(str, Enum):
@@ -311,6 +317,12 @@ def predict(
         inplace=True,
     )
     predictions.set_index(index, inplace=True)
+    predictions["population_description"] = predictions[
+        "predicted_population_population"
+    ].apply(lambda row: pop_codes[row])
+    predictions["superpopulation_name"] = predictions[
+        "predicted_population_superpopulation"
+    ].apply(lambda row: super_pop_codes[row])
 
     if write_predictions:
         predictions.to_csv(output_directory.joinpath("predictions.csv"))
