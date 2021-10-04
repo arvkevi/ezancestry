@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ezancestry"
-version = "0.0.4"
+version = "0.0.5"
 description = "Easily predict and visualize genetic ancestry. Evaluate custom ancestry-informative SNP sets."
 authors = ["arvkevi <arvkevi@gmail.com>"]
 license = "MIT"
@@ -14,7 +14,7 @@ readme = "README.md"
 ezancestry = "ezancestry.commands:app"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = ">=3.7.1,<3.11"
 cmake = "^3.21.2"
 cyvcf2 = "^0.30.11"
 loguru = "^0.5.3"
