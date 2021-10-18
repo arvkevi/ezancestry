@@ -1,11 +1,9 @@
 name: CI
 
 on:
-  schedule:
-    - cron: '37 4 * * 0'
   push:
     branches: 
-      - '**'
+      - 'master'
   pull_request:
     branches: 
       - '**'
@@ -25,7 +23,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
-
   test:
       needs: [build]
       runs-on: ${{ matrix.os }}
