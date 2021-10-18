@@ -17,8 +17,9 @@ from ezancestry.config import models_directory as _models_directory
 from ezancestry.config import n_components as _n_components
 from ezancestry.config import population_level as _population_level
 from ezancestry.config import samples_directory as _samples_directory
-from ezancestry.config import \
-    thousand_genomes_directory as _thousand_genomes_directory
+from ezancestry.config import (
+    thousand_genomes_directory as _thousand_genomes_directory,
+)
 from ezancestry.dimred import dimensionality_reduction
 from ezancestry.fetch import download_thousand_genomes
 from ezancestry.model import predict_ancestry, train
@@ -84,10 +85,10 @@ def export_performance(
     outdir = Path(outdir)
 
     population_level = (
-        population_level.replace("-", "").replace(" ", "").upper()
+        population_level.replace("-", "").replace(" ", "").lower()
     )
-    algorithm = algorithm.upper()
-    aisnps_set = aisnps_set.upper()
+    algorithm = algorithm.lower()
+    aisnps_set = aisnps_set.lower()
 
     # Load the pre-trained model
     model = models_directory.joinpath(

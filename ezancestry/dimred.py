@@ -5,15 +5,15 @@ import pandas as pd
 import umap
 from loguru import logger
 from sklearn.decomposition import PCA
-from sklearn.neighbors import NeighborhoodComponentsAnalysis as NCA
+from sklearn.neighbors import NeighborhoodComponentsAnalysis as nca
 
 from ezancestry.config import models_directory as _models_directory
 
 
 def dimensionality_reduction(
     df,
-    algorithm="PCA",
-    aisnps_set="Kidd",
+    algorithm="pca",
+    aisnps_set="kidd",
     n_components=3,
     overwrite_model=False,
     labels=None,
@@ -21,23 +21,23 @@ def dimensionality_reduction(
     models_directory=None,
     random_state=None,
 ):
-    """Reduce the dimensionality of the AISNPs
-    :param df: One-hot encoded AISNPs.
+    """Reduce the dimensionality of the aisnps
+    :param df: One-hot encoded aisnps.
     :type df: pandas DataFrame
     :param algorithm: The type of dimensionality reduction to perform.
-        One of {PCA, UMAP, t-SNE, NCA}
+        One of {pca, umap, t-SNE, nca}
     :type algorithm: str
-    :param aisnps_set: One of either {Kidd, Seldin}
+    :param aisnps_set: One of either {kidd, Seldin}
     :type aisnps_set: str
     :param n_components: The number of components to use for dimensionality reduction.
     :param n_components: int
     :param overwrite_model: Whether to overwrite the model.
     :type overwrite_mode: bool
-    :param labels: If algorithm is "NCA", then labels for the records in the
+    :param labels: If algorithm is "nca", then labels for the records in the
     DataFrame are used for the dimensionality reduction.
     :type labels: array-like
     :param population_level: Either {"population" or "super population"} If
-    algorithm is "NCA", then population_level is used to name the
+    algorithm is "nca", then population_level is used to name the
     dimensionality reduction model file.
     :type population_level: str
     :param models_directory: The directory to save the model to.
@@ -46,15 +46,15 @@ def dimensionality_reduction(
     :type random_state: int or None
     :returns: The transformed X DataFrame, reduced to 3 components by <algorithm>.
     """
-    algorithm = algorithm.upper()
-    aisnps_set = aisnps_set.upper()
+    algorithm = algorithm.lower()
+    aisnps_set = aisnps_set.lower()
 
     if models_directory is None:
         models_directory = _models_directory
     models_directory = Path(models_directory)
 
     population_level = (
-        population_level.replace("-", "").replace(" ", "").upper()
+        population_level.replace("-", "").replace(" ", "").lower()
     )
     columns = [
         col
@@ -63,12 +63,12 @@ def dimensionality_reduction(
     ]
     df = df[columns]
     if overwrite_model:
-        if algorithm in set(["PCA", "UMAP"]):
-            if algorithm == "PCA":
+        if algorithm in set(["pca", "umap"]):
+            if algorithm == "pca":
                 reducer = PCA(
                     n_components=n_components, random_state=random_state
                 )
-            elif algorithm == "UMAP":
+            elif algorithm == "umap":
                 reducer = umap.UMAP(
                     n_components=n_components,
                     min_dist=0.2,
@@ -82,8 +82,8 @@ def dimensionality_reduction(
                 reducer,
                 models_directory.joinpath(f"{algorithm}.{aisnps_set}.bin"),
             )
-        elif algorithm == "NCA":
-            reducer = NCA(
+        elif algorithm == "nca":
+            reducer = nca(
                 n_components=n_components,
                 random_state=random_state,
             )
@@ -102,14 +102,14 @@ def dimensionality_reduction(
         )
     else:
         # load reducer and return reduced X
-        if algorithm in set(["PCA", "UMAP"]):
+        if algorithm in set(["pca", "umap"]):
             try:
                 reducer = joblib.load(
                     models_directory.joinpath(f"{algorithm}.{aisnps_set}.bin")
                 )
             except FileNotFoundError:
                 return None
-        elif algorithm == "NCA":
+        elif algorithm == "nca":
             try:
                 reducer = joblib.load(
                     models_directory.joinpath(

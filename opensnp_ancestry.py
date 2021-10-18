@@ -19,16 +19,19 @@ from snps import SNPs
 from snps.resources import Resources
 from snps.utils import Parallelizer, create_dir, save_df_as_csv
 
-from streamlit.util import (dimensionality_reduction, encode_genotypes,
-                            filter_user_genotypes, get_1kg_samples,
-                            impute_missing, vcf2df)
+from streamlit.util import (
+    dimensionality_reduction,
+    encode_genotypes,
+    filter_user_genotypes,
+    get_1kg_samples,
+    impute_missing,
+    vcf2df,
+)
 
 DATA_DIR = "data"
 OUTPUT_DIR = "output"
-AISNP_SET = (
-    "Kidd et al. 55 AISNPs"
-)  # {"Kidd et al. 55 AISNPs", "Seldin et al. 128 AISNPs"}
-DIMENSIONALITY_REDUCTION_ALGORITHM = "PCA"  # {"PCA", "UMAP", "t-SNE"}
+aisnp_SET = "kidd et al. 55 aisnps"  # {"kidd et al. 55 aisnps", "Seldin et al. 128 aisnps"}
+DIMENSIONALITY_REDUCTION_ALGORITHM = "pca"  # {"pca", "umap", "t-SNE"}
 
 # create output directory for this example
 create_dir(OUTPUT_DIR)
@@ -64,9 +67,9 @@ def main():
     logging.info("retreived the 1kg samples")
 
     aisnps_1kg = (
-        vcf2df(f"{DATA_DIR}/Kidd.55AISNP.1kG.vcf", dfsamples)
-        if AISNP_SET == "Kidd et al. 55 AISNPs"
-        else vcf2df(f"{DATA_DIR}/Seldin.128AISNP.1kG.vcf", dfsamples)
+        vcf2df(f"{DATA_DIR}/kidd.55aisnp.1kG.vcf", dfsamples)
+        if aisnp_SET == "kidd et al. 55 aisnps"
+        else vcf2df(f"{DATA_DIR}/Seldin.128aisnp.1kG.vcf", dfsamples)
     )
     logging.info("made the AIsnp DataFrame")
 
@@ -81,7 +84,9 @@ def main():
     logging.info("Reduced the dimensionality of the genotypes")
 
     # predicted population
-    knn_super_pop = KNeighborsClassifier(n_neighbors=9, weights="distance", n_jobs=1)
+    knn_super_pop = KNeighborsClassifier(
+        n_neighbors=9, weights="distance", n_jobs=1
+    )
     knn_pop = KNeighborsClassifier(n_neighbors=9, weights="distance", n_jobs=1)
 
     # fit the knn before adding the user sample
@@ -177,7 +182,7 @@ def process_file(task):
     try:
         user_snps = SNPs(r.load_opensnp_datadump_file(file))
 
-        # filter out files that likely don't have AISNPs
+        # filter out files that likely don't have aisnps
         if user_snps.count < 100000:
             logging.info(f"{file}: <100k SNPs")
             return None
@@ -192,7 +197,9 @@ def process_file(task):
         }
 
         # filter and encode the user record
-        user_record, aisnps_1kg = filter_user_genotypes(user_snps.snps, aisnps_1kg)
+        user_record, aisnps_1kg = filter_user_genotypes(
+            user_snps.snps, aisnps_1kg
+        )
         user_encoded = encoder.transform(user_record)
         X_encoded = np.concatenate((X_encoded, user_encoded))
 
@@ -200,7 +207,9 @@ def process_file(task):
         user_imputed = impute_missing(X_encoded)
         user_reduced = reducer.transform([user_imputed])
 
-        d.update(dict(get_predicted_probs(knn_super_pop, user_reduced).loc["user"]))
+        d.update(
+            dict(get_predicted_probs(knn_super_pop, user_reduced).loc["user"])
+        )
         d.update(dict(get_predicted_probs(knn_pop, user_reduced).loc["user"]))
         d.update(
             {
@@ -208,7 +217,7 @@ def process_file(task):
                 "component2": user_reduced[0][1],
                 "component3": user_reduced[0][2],
             }
-            )
+        )
 
         return d
     except Exception as err:
@@ -217,9 +226,11 @@ def process_file(task):
 
 
 def get_predicted_probs(knn, user_reduced):
-    """ Get predicted ancestry probabilities for a user. """
+    """Get predicted ancestry probabilities for a user."""
     user_pop_probs = knn.predict_proba(user_reduced)
-    return pd.DataFrame([user_pop_probs[0]], columns=knn.classes_, index=["user"])
+    return pd.DataFrame(
+        [user_pop_probs[0]], columns=knn.classes_, index=["user"]
+    )
 
 
 if __name__ == "__main__":

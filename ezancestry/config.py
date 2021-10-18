@@ -75,10 +75,10 @@ config["directories"] = {
 }
 config["general"] = {
     "population_level": "superpopulation",
-    "aisnps_set": "Kidd",
+    "aisnps_set": "kidd",
 }
 config["dimensionality_reduction"] = {
-    "algorithm": "PCA",
+    "algorithm": "pca",
     "n_components": 3,
 }
 config["nearest_neighbors"] = {

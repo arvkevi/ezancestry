@@ -41,12 +41,12 @@ def get_1kg_labels(samples_directory=None):
 
 
 def vcf2df(vcf_fname, dfsamples):
-    """Convert a vcf file (from the 1kg AISNPs) to a pandas DataFrame
-    :param vcf_fname: path to the vcf file with AISNPs for every 1kg sample
+    """Convert a vcf file (from the 1kg aisnps) to a pandas DataFrame
+    :param vcf_fname: path to the vcf file with aisnps for every 1kg sample
     :type vcf_fname: str
     :param dfsamples: DataFrame with sample-level info on each 1kg sample.
     :type dfsamples: pandas DataFrame
-    :return: DataFrame with genotypes for AISNPs as columns and samples as rows.
+    :return: DataFrame with genotypes for aisnps as columns and samples as rows.
     :rtype: pandas DataFrame
     """
     vcf_file = VCF(vcf_fname)
@@ -65,7 +65,7 @@ def vcf2df(vcf_fname, dfsamples):
 
 def encode_genotypes(
     df,
-    aisnps_set="Kidd",
+    aisnps_set="kidd",
     overwrite_encoder=False,
     models_directory=None,
     aisnps_directory=None,
@@ -73,13 +73,13 @@ def encode_genotypes(
     """One-hot encode the genotypes
     :param df: A DataFrame of samples with genotypes as columns
     :type df: pandas DataFrame
-    :param aisnps_set: One of either {Kidd, Seldin}
+    :param aisnps_set: One of either {kidd, Seldin}
     :type aisnps_set: str
     :param overwrite_encoder: Flag whether or not to overwrite the saved encoder for the given aisnps_set. Default: False, will load the saved encoder model.
     :type overwrite_encoder: bool
     :param models_directory: Path to the directory where the saved encoder model is saved. Default: None, will use the default location.
     :type models_directory: str
-    :param aisnps_directory: Path to the directory where the AISNPs are saved. Default: None, will use the default location.
+    :param aisnps_directory: Path to the directory where the aisnps are saved. Default: None, will use the default location.
     :type aisnps_directory: str
     :return: pandas DataFrame of one-hot encoded columns for genotypes and OHE instance
     :rtype: pandas DataFrame, OneHotEncoder instance
@@ -93,7 +93,7 @@ def encode_genotypes(
     models_directory = Path(models_directory)
     aisnps_directory = Path(aisnps_directory)
 
-    aisnps_set = aisnps_set.upper()
+    aisnps_set = aisnps_set.lower()
     try:
         aisnps = pd.read_csv(
             aisnps_directory.joinpath(
@@ -103,7 +103,7 @@ def encode_genotypes(
             index_col=0,
         ).drop(columns=["population", "superpopulation", "gender"])
     except FileNotFoundError:
-        logger.critical("""aisnps_set must be either "Kidd" or "Seldin".""")
+        logger.critical("""aisnps_set must be either "kidd" or "Seldin".""")
         return
 
     # concact will add snps (columns) to the df that aren't in the user-submitted
@@ -112,7 +112,7 @@ def encode_genotypes(
     df = pd.concat([aisnps, df])[aisnps.columns]
 
     # TODO: Impute missing values
-    # imputer = KNNImputer(n_neighbors=9)
+    # imputer = knnImputer(n_neighbors=9)
     # imputed_aisnps = imputer.fit_transform(df)
 
     if overwrite_encoder:
@@ -164,11 +164,11 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
     aisnps_directory = Path(aisnps_directory)
 
     aisnpsdf = pd.read_csv(
-        aisnps_directory.joinpath(f"{aisnps_set}.AISNP.txt"),
+        aisnps_directory.joinpath(f"{aisnps_set}.aisnp.txt"),
         dtype={"rsid": str, "chromosome": str, "position_hg19": int},
         sep="\t",
     )
-    
+
     try:
         input_data_is_pathlike = bool(Path(input_data))
     except TypeError:
@@ -192,8 +192,10 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
                     )
                 except Exception as e:
                     logger.debug(e)
-                    logger.warning(f"Skipping {filepath} because it was not valid")
-        
+                    logger.warning(
+                        f"Skipping {filepath} because it was not valid"
+                    )
+
             return snpsdf
 
         # The user-submitted input data is a single file.
@@ -213,7 +215,11 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
             # read the user-submitted preformatted data as a DataFrame
             try:
                 snpsdf = pd.read_csv(
-                    input_data, index_col=0, sep=None, engine="python", dtype=str
+                    input_data,
+                    index_col=0,
+                    sep=None,
+                    engine="python",
+                    dtype=str,
                 )
                 # Need to clean up the dataframe if there is extra stuff in it
                 # keep the first column, it's the index
@@ -228,18 +234,18 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
                 )
     else:
         snpsdf = _input_to_dataframe(input_data, aisnpsdf)
-    
+
     return snpsdf
 
 
 def _input_to_dataframe(input_data, aisnpsdf):
     """Reads one file and returns a pandas DataFrame.
 
-    :param aisnpsdf: A DataFrame of AISNPs
+    :param aisnpsdf: A DataFrame of aisnps
     :type aisnpsdf: pandas DataFrame
     :param input_data: Path object to the file to be read or a SNPs DataFrame
     :type input_data: Path
-    :return: A DataFrame of one record and many columns for each AISNP.
+    :return: A DataFrame of one record and many columns for each aisnp.
     :rtype: pandas DataFrame
     """
     # try to read a single file
@@ -247,7 +253,7 @@ def _input_to_dataframe(input_data, aisnpsdf):
         is_pathlike = bool(Path(input_data))
     except TypeError:
         is_pathlike = False
-    if is_pathlike:     
+    if is_pathlike:
         try:
             snpsobj = SNPs(str(input_data))
             if snpsobj.count == 0:
@@ -267,7 +273,7 @@ def _input_to_dataframe(input_data, aisnpsdf):
         columns={"chrom": "chromosome", "pos": "position_hg19"},
         inplace=True,
     )
-    # subset to AISNPs
+    # subset to aisnps
     snpsdf = aisnpsdf.merge(
         snpsdf, on=["rsid", "chromosome", "position_hg19"], how="left"
     )

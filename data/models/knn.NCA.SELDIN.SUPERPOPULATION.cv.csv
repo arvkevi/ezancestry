@@ -1,6 +1,6 @@
 ,fit_time,score_time,estimator,test_f1_macro,train_f1_macro,test_precision_macro,train_precision_macro,test_recall_macro,train_recall_macro,test_accuracy,train_accuracy,training_accuracy
-Fold 1,0.0026488304138183594,0.016335010528564453,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",0.996332499810563,1.0,0.9952380952380953,1.0,0.9974999999999999,1.0,0.9966777408637874,1.0,1.0
-Fold 2,0.0027713775634765625,0.012505769729614258,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
-Fold 3,0.0052258968353271484,0.012646198272705078,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
-Fold 4,0.0055429935455322266,0.0159149169921875,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
-Fold 5,0.002866983413696289,0.0140228271484375,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
+Fold 1,0.003222942352294922,0.03597402572631836,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",0.996332499810563,1.0,0.9952380952380953,1.0,0.9974999999999999,1.0,0.9966777408637874,1.0,1.0
+Fold 2,0.002969980239868164,0.01412200927734375,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
+Fold 3,0.004430055618286133,0.02219390869140625,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
+Fold 4,0.0036249160766601562,0.018557071685791016,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
+Fold 5,0.0041961669921875,0.016817808151245117,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
