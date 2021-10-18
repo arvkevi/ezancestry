@@ -24,9 +24,9 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
   test:
-      needs: [build]
-      runs-on: ${{ matrix.os }}
-      steps:
+    needs: [build]
+    runs-on: ${{ matrix.os }}
+    steps:
       - uses: actions/checkout@v2
         with:
           persist-credentials: false
