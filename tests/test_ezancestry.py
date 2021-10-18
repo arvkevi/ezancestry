@@ -10,7 +10,7 @@ data_directory = tests_directory.parent.joinpath("data")
 
 # need to test umap, but getting bytecode error
 # https://github.com/lmcinnes/umap/issues/473#issuecomment-675340411
-@pytest.mark.parametrize("algorithm", [None, "pca", "umap"])
+@pytest.mark.parametrize("algorithm", [None, "pca"])
 def test_predict_from_file(algorithm):
     """Test the predict function from file."""
     sample_filename = tests_data_directory.joinpath("sample_genome_snps.txt")
