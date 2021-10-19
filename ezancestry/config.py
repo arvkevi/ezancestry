@@ -30,7 +30,7 @@ full_config_file_path = Path(project_directory).joinpath("conf.ini")
 
 config = configparser.ConfigParser()
 
-# make sure the non-1kG default directories have data in them
+# make sure the non-1kg default directories have data in them
 if not any(default_models_directory.iterdir()):
     # pkg_resources copy data from the package to the user's home directory
     logger.info(
@@ -52,7 +52,6 @@ if not any(default_aisnps_directory.iterdir()):
         if fileobj == "__init__.py" or fileobj == "__pycache__":
             continue
         with pkg_resources.path("data.aisnps", fileobj) as file_to_copy:
-            logger.info(f"Copying {file_to_copy} to {default_aisnps_directory}")
             shutil.copy(file_to_copy, default_aisnps_directory)
 
 if not any(default_samples_directory.iterdir()):

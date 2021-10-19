@@ -79,7 +79,7 @@ def build_model(
     aisnps_set: Optional[str] = typer.Option(
         None,
         help="The name of the aisnp set to use. To start, choose either "
-        "'kidd' or 'Seldin'. The default value in conf.ini is 'kidd'."
+        "'kidd' or 'seldin'. The default value in conf.ini is 'kidd'."
         "\n*If using your aisnp set, this value will be the in the naming"
         "convention for all the new model files that are created*",
     ),
@@ -121,7 +121,7 @@ def build_model(
     samples_directory = Path(samples_directory)
     thousand_genomes_directory = Path(thousand_genomes_directory)
 
-    # download 1kG
+    # download 1kg
     download_thousand_genomes(thousand_genomes_directory)
     # extract snps
     aisnps_file = Path(aisnps_directory).joinpath(f"{aisnps_set}.aisnp.txt")
@@ -129,7 +129,7 @@ def build_model(
 
     # process data
     dfsamples = get_1kg_labels(samples_directory)
-    vcf_fname = Path(aisnps_directory).joinpath(f"{aisnps_set}.aisnp.1kG.vcf")
+    vcf_fname = Path(aisnps_directory).joinpath(f"{aisnps_set}.aisnp.1kg.vcf")
     dfsnps = vcf2df(vcf_fname, dfsamples)
     labels = dfsnps[population_level]
     dfsnps.drop(
@@ -145,7 +145,7 @@ def build_model(
         random_state=42,
     )
 
-    # fit & write models on 1kG
+    # fit & write models on 1kg
     dfencoded_train = encode_genotypes(
         train_df,
         aisnps_set=aisnps_set,
@@ -247,7 +247,7 @@ def predict(
     aisnps_set: Optional[str] = typer.Option(
         None,
         help="The name of the aisnp set to use. To start, choose either "
-        "'kidd' or 'Seldin'. The default value in conf.ini is 'kidd'."
+        "'kidd' or 'seldin'. The default value in conf.ini is 'kidd'."
         "\n*If using your aisnp set, this value will be the in the naming "
         "convention for all the new model files that are created*",
     ),

@@ -38,13 +38,13 @@ def main():
     # select which set of SNPs to explore
     aisnp_set = st.sidebar.radio(
         "Set of ancestry-informative SNPs:",
-        ("kidd et al. 55 aisnps", "Seldin et al. 128 aisnps"),
+        ("kidd et al. 55 aisnps", "seldin et al. 128 aisnps"),
     )
     if aisnp_set == "kidd et al. 55 aisnps":
-        aisnps_1kg = vcf2df_app("data/kidd.55aisnp.1kG.vcf", dfsamples)
+        aisnps_1kg = vcf2df_app("data/kidd.55aisnp.1kg.vcf", dfsamples)
         n_aisnps = 55
-    elif aisnp_set == "Seldin et al. 128 aisnps":
-        aisnps_1kg = vcf2df_app("data/Seldin.128aisnp.1kG.vcf", dfsamples)
+    elif aisnp_set == "seldin et al. 128 aisnps":
+        aisnps_1kg = vcf2df_app("data/seldin.128aisnp.1kg.vcf", dfsamples)
         n_aisnps = 128
 
     # Encode 1kg data

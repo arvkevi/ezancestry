@@ -67,9 +67,9 @@ def main():
     logging.info("retreived the 1kg samples")
 
     aisnps_1kg = (
-        vcf2df(f"{DATA_DIR}/kidd.55aisnp.1kG.vcf", dfsamples)
+        vcf2df(f"{DATA_DIR}/kidd.55aisnp.1kg.vcf", dfsamples)
         if aisnp_SET == "kidd et al. 55 aisnps"
-        else vcf2df(f"{DATA_DIR}/Seldin.128aisnp.1kG.vcf", dfsamples)
+        else vcf2df(f"{DATA_DIR}/Seldin.128aisnp.1kg.vcf", dfsamples)
     )
     logging.info("made the AIsnp DataFrame")
 

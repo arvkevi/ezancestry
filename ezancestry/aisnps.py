@@ -62,7 +62,7 @@ def extract_aisnps(
     bcf_fname = f"ALL.chr{1}.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.bcf"
     bcf_file = thousand_genomes_directory.joinpath(bcf_fname)
     bcf = VCF(bcf_file)
-    outfile = aisnps_directory.joinpath(f"{aisnps_set}.aisnp.1kG.vcf")
+    outfile = aisnps_directory.joinpath(f"{aisnps_set}.aisnp.1kg.vcf")
     w = Writer(outfile, bcf)
     for _, aim in df.iterrows():
         rsid = aim["rsid"]
@@ -82,7 +82,7 @@ def extract_aisnps(
             )
     w.close()
     bcf.close()
-    logger.info(f"Successfully wrote {aisnps_set}.aisnp.1kG.vcf")
+    logger.info(f"Successfully wrote {aisnps_set}.aisnp.1kg.vcf")
 
 
 def _generate_aisnps(
@@ -115,5 +115,5 @@ def _generate_aisnps(
     extract_aisnps(
         thousand_genomes_directory,
         aisnps_directory=aisnps_directory,
-        aisnps_set="Seldin",
+        aisnps_set="seldin",
     )

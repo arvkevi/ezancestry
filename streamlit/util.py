@@ -53,7 +53,7 @@ def encode_genotypes(df):
 
 def dimensionality_reduction(X, algorithm="pca"):
     """Reduce the dimensionality of the aisnps
-    :param X: One-hot encoded 1kG aisnps.
+    :param X: One-hot encoded 1kg aisnps.
     :type X: pandas DataFrame
     :param algorithm: The type of dimensionality reduction to perform.
         One of {pca, umap, t-SNE}

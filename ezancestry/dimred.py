@@ -27,7 +27,7 @@ def dimensionality_reduction(
     :param algorithm: The type of dimensionality reduction to perform.
         One of {pca, umap, t-SNE, nca}
     :type algorithm: str
-    :param aisnps_set: One of either {kidd, Seldin}
+    :param aisnps_set: One of either {kidd, seldin}
     :type aisnps_set: str
     :param n_components: The number of components to use for dimensionality reduction.
     :param n_components: int

@@ -73,7 +73,7 @@ def encode_genotypes(
     """One-hot encode the genotypes
     :param df: A DataFrame of samples with genotypes as columns
     :type df: pandas DataFrame
-    :param aisnps_set: One of either {kidd, Seldin}
+    :param aisnps_set: One of either {kidd, seldin}
     :type aisnps_set: str
     :param overwrite_encoder: Flag whether or not to overwrite the saved encoder for the given aisnps_set. Default: False, will load the saved encoder model.
     :type overwrite_encoder: bool
@@ -103,7 +103,7 @@ def encode_genotypes(
             index_col=0,
         ).drop(columns=["population", "superpopulation", "gender"])
     except FileNotFoundError:
-        logger.critical("""aisnps_set must be either "kidd" or "Seldin".""")
+        logger.critical("""aisnps_set must be either "kidd" or "seldin".""")
         return
 
     # concact will add snps (columns) to the df that aren't in the user-submitted
