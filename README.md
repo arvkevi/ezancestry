@@ -1,4 +1,5 @@
 # ezancestry
+![Build](https://github.com/arvkevi/ezancestry/actions/workflows/ci.yml/badge.svg)  
 
 Easily visualize your direct-to-consumer genetics next to 2500+ samples from the 1000 genomes project. Evaluate the performance of a custom set of ancestry-informative snps (AISNPs) at classifying the genetic ancestry of the 1000 genomes samples using a machine learning model. 
 
