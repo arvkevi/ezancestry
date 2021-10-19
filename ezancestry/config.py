@@ -52,6 +52,7 @@ if not any(default_aisnps_directory.iterdir()):
         if fileobj == "__init__.py" or fileobj == "__pycache__":
             continue
         with pkg_resources.path("data.aisnps", fileobj) as file_to_copy:
+            logger.info(f"Copying {file_to_copy} to {default_aisnps_directory}")
             shutil.copy(file_to_copy, default_aisnps_directory)
 
 if not any(default_samples_directory.iterdir()):
