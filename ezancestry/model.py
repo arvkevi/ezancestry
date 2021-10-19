@@ -28,7 +28,7 @@ def train(
     :type labels: array, list
     :param algorithm: The dimensionality reduction algorithm that was used
     :type algorithm: str
-    :param aisnps_set: The set of AISNPs to use
+    :param aisnps_set: The set of aisnps to use
     :type aisnps_set: str
     :param k: The number of nearest neighbors to consider
     :type k: int
@@ -38,7 +38,7 @@ def train(
     :type population_level: str
     :param overwrite_model: Whether to overwrite the model if it already exists
     :type overwrite_model: bool
-    :return: The trained KNN model
+    :return: The trained knn model
     :rtype: fit KNeighborsClassifier
     """
 
@@ -55,10 +55,10 @@ def train(
 
     models_directory = Path(models_directory)
 
-    algorithm = algorithm.upper()
-    aisnps_set = aisnps_set.upper()
+    algorithm = algorithm.lower()
+    aisnps_set = aisnps_set.lower()
     population_level = (
-        population_level.replace("-", "").replace(" ", "").upper()
+        population_level.replace("-", "").replace(" ", "").lower()
     )
 
     # Create the model
@@ -70,10 +70,10 @@ def train(
         joblib.dump(
             model,
             models_directory.joinpath(
-                f"KNN.{algorithm}.{aisnps_set}.{population_level}.bin"
+                f"knn.{algorithm}.{aisnps_set}.{population_level}.bin"
             ),
         )
-        logger.info(f"Wrote the KNN model to: {models_directory}")
+        logger.info(f"Wrote the knn model to: {models_directory}")
 
     return model
 
@@ -91,11 +91,11 @@ def predict_ancestry(df, trained_model):
     ancestrydf = df.copy()
     try:
         knn = joblib.load(str(trained_model))
-        logger.info(f"Successfully loaded trained KNN model: {trained_model}")
+        logger.info(f"Successfully loaded trained knn model: {trained_model}")
     except Exception as e:
-        logger.error(f"Could not load the KNN model: {e}")
+        logger.warning(f"Could not load the knn model: {e}")
         knn = trained_model
-        logger.info("Using user-provided KNN model")
+        logger.info("Using user-provided knn model")
 
     user_pop = knn.predict(ancestrydf)
     user_pop_probs = knn.predict_proba(ancestrydf)

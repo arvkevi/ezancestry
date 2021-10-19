@@ -42,25 +42,25 @@ class PopulationLevel(str, Enum):
 app = typer.Typer(
     help="The ezancestry command line tool makes it easy to quickly train models "
     "on 1000 genomes project data and view the performance of a "
-    "ancestry-informative snp set (AISNPs) at predicting genetic ancestry."
+    "ancestry-informative snp set (aisnps) at predicting genetic ancestry."
 )
 
 
-@app.command(short_help="Build and evaluate a new model from a set of AISNPs.")
+@app.command(short_help="Build and evaluate a new model from a set of aisnps.")
 def build_model(
     models_directory: str = typer.Option(
         None, help="The path to the directory to save the model to."
     ),
     aisnps_directory: str = typer.Option(
         None,
-        help="The path to the directory where the AISNPs files are located.",
+        help="The path to the directory where the aisnps files are located.",
     ),
     n_components: int = typer.Option(
         None,
-        help="The number of components to use in the PCA dimensionality reduction.",
+        help="The number of components to use in the pca dimensionality reduction.",
     ),
     k: int = typer.Option(
-        None, help="The number of nearest neighbors to use in the KNN model."
+        None, help="The number of nearest neighbors to use in the knn model."
     ),
     thousand_genomes_directory: str = typer.Option(
         None, help="The path to the 1000 genomes directory."
@@ -78,19 +78,19 @@ def build_model(
     ),
     aisnps_set: Optional[str] = typer.Option(
         None,
-        help="The name of the AISNP set to use. To start, choose either "
-        "'Kidd' or 'Seldin'. The default value in conf.ini is 'Kidd'."
-        "\n*If using your AISNP set, this value will be the in the naming"
+        help="The name of the aisnp set to use. To start, choose either "
+        "'kidd' or 'seldin'. The default value in conf.ini is 'kidd'."
+        "\n*If using your aisnp set, this value will be the in the naming"
         "convention for all the new model files that are created*",
     ),
 ):
     """
-    For example, if you create a custom AISNP file here: ~/.ezancestry/data/aisnps/custom.AISNP.txt
+    For example, if you create a custom aisnp file here: ~/.ezancestry/data/aisnps/custom.aisnp.txt
     and then run the build-model command, you will build a model from the snps in that file:
 
     $ ezancestry build-model --aisnps-set custom
 
-    See github.com/ezancestry/ezancestry/data/aisnps/custom.AISNP.txt for an example of a custom AISNP file.
+    See github.com/ezancestry/ezancestry/data/aisnps/custom.aisnp.txt for an example of a custom aisnp file.
 
     * Note that the 1000 genomes dataset is required for this function to work. *
 
@@ -121,15 +121,15 @@ def build_model(
     samples_directory = Path(samples_directory)
     thousand_genomes_directory = Path(thousand_genomes_directory)
 
-    # download 1kG
+    # download 1kg
     download_thousand_genomes(thousand_genomes_directory)
     # extract snps
-    aisnps_file = Path(aisnps_directory).joinpath(f"{aisnps_set}.AISNP.txt")
+    aisnps_file = Path(aisnps_directory).joinpath(f"{aisnps_set}.aisnp.txt")
     extract_aisnps(thousand_genomes_directory, aisnps_file, aisnps_set)
 
     # process data
     dfsamples = get_1kg_labels(samples_directory)
-    vcf_fname = Path(aisnps_directory).joinpath(f"{aisnps_set}.AISNP.1kG.vcf")
+    vcf_fname = Path(aisnps_directory).joinpath(f"{aisnps_set}.aisnp.1kg.vcf")
     dfsnps = vcf2df(vcf_fname, dfsamples)
     labels = dfsnps[population_level]
     dfsnps.drop(
@@ -145,18 +145,25 @@ def build_model(
         random_state=42,
     )
 
-    # fit & write models on 1kG
+    # fit & write models on 1kg
     dfencoded_train = encode_genotypes(
-        train_df, aisnps_set=aisnps_set, overwrite_encoder=True
+        train_df,
+        aisnps_set=aisnps_set,
+        overwrite_encoder=True,
+        models_directory=models_directory,
     )
     dfencoded_test = encode_genotypes(
-        test_df, aisnps_set=aisnps_set, overwrite_encoder=False
+        test_df,
+        aisnps_set=aisnps_set,
+        overwrite_encoder=False,
+        models_directory=models_directory,
     )
 
     dfreduced_train = dimensionality_reduction(
         dfencoded_train,
         algorithm=algorithm,
         aisnps_set=aisnps_set,
+        models_directory=models_directory,
         overwrite_model=True,
         labels=y_train,
         population_level=population_level,
@@ -165,6 +172,7 @@ def build_model(
         dfencoded_test,
         algorithm=algorithm,
         aisnps_set=aisnps_set,
+        models_directory=models_directory,
         overwrite_model=False,
         labels=y_train,
         population_level=population_level,
@@ -177,6 +185,7 @@ def build_model(
         aisnps_set=aisnps_set,
         k=k,
         population_level=population_level,
+        models_directory=models_directory,
         overwrite_model=True,
     )
 
@@ -216,14 +225,14 @@ def predict(
     ),
     aisnps_directory: str = typer.Option(
         None,
-        help="The path to the directory where the AISNPs files are located.",
+        help="The path to the directory where the aisnps files are located.",
     ),
     n_components: int = typer.Option(
         None,
-        help="The number of components to use in the PCA dimensionality reduction.",
+        help="The number of components to use in the pca dimensionality reduction.",
     ),
     k: int = typer.Option(
-        None, help="The number of nearest neighbors to use in the KNN model."
+        None, help="The number of nearest neighbors to use in the knn model."
     ),
     thousand_genomes_directory: str = typer.Option(
         None, help="The path to the 1000 genomes directory."
@@ -237,9 +246,9 @@ def predict(
     ),
     aisnps_set: Optional[str] = typer.Option(
         None,
-        help="The name of the AISNP set to use. To start, choose either "
-        "'Kidd' or 'Seldin'. The default value in conf.ini is 'Kidd'."
-        "\n*If using your AISNP set, this value will be the in the naming "
+        help="The name of the aisnp set to use. To start, choose either "
+        "'kidd' or 'seldin'. The default value in conf.ini is 'kidd'."
+        "\n*If using your aisnp set, this value will be the in the naming "
         "convention for all the new model files that are created*",
     ),
 ):
@@ -466,7 +475,7 @@ def generate_dependencies(
     ),
     aisnps_directory: str = typer.Option(
         None,
-        help="The path to the directory where the AISNPs files are located.",
+        help="The path to the directory where the aisnps files are located.",
     ),
     thousand_genomes_directory: str = typer.Option(
         None, help="The path to the 1000 genomes directory."
@@ -494,9 +503,9 @@ def generate_dependencies(
 
     k = _k
     n_components = _n_components
-    algorithms = ["PCA", "UMAP", "NCA"]
+    algorithms = ["pca", "umap", "nca"]
     population_levels = ["population", "superpopulation"]
-    aisnps_sets = ["Kidd", "Seldin"]
+    aisnps_sets = ["kidd", "seldin"]
 
     for algorithm in algorithms:
         for population_level in population_levels:

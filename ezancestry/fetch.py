@@ -4,8 +4,9 @@ from pathlib import Path
 
 from loguru import logger
 
-from ezancestry.config import \
-    thousand_genomes_directory as _thousands_genomes_directory
+from ezancestry.config import (
+    thousand_genomes_directory as _thousands_genomes_directory,
+)
 
 
 def download_thousand_genomes(thousand_genomes_directory=None):
@@ -27,16 +28,16 @@ def download_thousand_genomes(thousand_genomes_directory=None):
         if (
             input(
                 "Are you sure you want to download 1000 Genomes data (13GB)? (y/n)"
-            ).upper()
+            ).lower()
             != "Y"
         ):
             sys.exit("Exiting...")
 
     ftp_site = "ftp.1000genomes.ebi.ac.uk"
-    filepath = "/vol1/ftp/release/20130502/supporting/bcf_files/"
+    filepath = Path("/vol1/ftp/release/20130502/supporting/bcf_files/")
     ftp = ftplib.FTP(ftp_site)
     ftp.login()
-    ftp.cwd(filepath)
+    # ftp.cwd(filepath)
 
     logger.info("Downloading 1000 Genomes data, this will take about an hour")
     for chromosome in [str(_) for _ in range(1, 23)] + ["X", "Y"]:
@@ -51,7 +52,7 @@ def download_thousand_genomes(thousand_genomes_directory=None):
                 Path(thousand_genomes_directory).joinpath(bcf_file), "wb"
             ) as fp:
                 logger.info(f"Downloading chromosome {chromosome}...")
-                ftp.retrbinary(f"RETR {bcf_file}", fp.write)
+                ftp.retrbinary(f"RETR {filepath.joinpath(bcf_file)}", fp.write)
         else:
             logger.warning(
                 f"{Path(thousand_genomes_directory).joinpath(bcf_file)} already exists, skipping..."
@@ -67,7 +68,9 @@ def download_thousand_genomes(thousand_genomes_directory=None):
             with open(
                 Path(thousand_genomes_directory).joinpath(index_file), "wb"
             ) as fp:
-                ftp.retrbinary(f"RETR {index_file}", fp.write)
+                ftp.retrbinary(
+                    f"RETR {filepath.joinpath(index_file)}", fp.write
+                )
         else:
             logger.warning(
                 f"{Path(thousand_genomes_directory).joinpath(index_file)} already exists, skipping..."

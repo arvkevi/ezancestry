@@ -8,12 +8,17 @@ from category_encoders.one_hot import OneHotEncoder
 from cyvcf2 import VCF
 from MulticoreTSNE import MulticoreTSNE as TSNE
 from sklearn.decomposition import PCA
-from sklearn.impute import KNNImputer
+from sklearn.impute import knnImputer
 from sklearn.neighbors import KNeighborsClassifier
 from snps import SNPs
-from util import (dimensionality_reduction, encode_genotypes,
-                  filter_user_genotypes, get_1kg_samples, impute_missing,
-                  vcf2df)
+from util import (
+    dimensionality_reduction,
+    encode_genotypes,
+    filter_user_genotypes,
+    get_1kg_samples,
+    impute_missing,
+    vcf2df,
+)
 
 import streamlit as st
 
@@ -33,20 +38,20 @@ def main():
     # select which set of SNPs to explore
     aisnp_set = st.sidebar.radio(
         "Set of ancestry-informative SNPs:",
-        ("Kidd et al. 55 AISNPs", "Seldin et al. 128 AISNPs"),
+        ("kidd et al. 55 aisnps", "seldin et al. 128 aisnps"),
     )
-    if aisnp_set == "Kidd et al. 55 AISNPs":
-        aisnps_1kg = vcf2df_app("data/Kidd.55AISNP.1kG.vcf", dfsamples)
+    if aisnp_set == "kidd et al. 55 aisnps":
+        aisnps_1kg = vcf2df_app("data/kidd.55aisnp.1kg.vcf", dfsamples)
         n_aisnps = 55
-    elif aisnp_set == "Seldin et al. 128 AISNPs":
-        aisnps_1kg = vcf2df_app("data/Seldin.128AISNP.1kG.vcf", dfsamples)
+    elif aisnp_set == "seldin et al. 128 aisnps":
+        aisnps_1kg = vcf2df_app("data/seldin.128aisnp.1kg.vcf", dfsamples)
         n_aisnps = 128
 
     # Encode 1kg data
     X_encoded, encoder = encode_genotypes_app(aisnps_1kg)
     # Dimensionality reduction
     dimensionality_reduction_method = st.sidebar.radio(
-        "Dimensionality reduction technique:", ("PCA", "UMAP", "t-SNE")
+        "Dimensionality reduction technique:", ("pca", "umap", "t-SNE")
     )
     # perform dimensionality reduction on the 1kg set
     X_reduced, reducer = dimensionality_reduction_app(
@@ -63,7 +68,7 @@ def main():
 
     # upload the user genotypes file
     user_file = st.sidebar.file_uploader("Upload your genotypes:")
-    # Collapsable user AISNPs DataFrame
+    # Collapsable user aisnps DataFrame
     if user_file is not None:
         try:
             with st.spinner("Uploading your genotypes..."):
@@ -110,7 +115,7 @@ def main():
         # predict the population for the user sample
         user_pop = knn.predict(user_reduced)[0]
         st.subheader(f"Your predicted {population_level}")
-        st.text(f"Your predicted population using KNN classifier is {user_pop}")
+        st.text(f"Your predicted population using knn classifier is {user_pop}")
         # show the predicted probabilities for each population
         st.subheader(f"Your predicted {population_level} probabilities")
         user_pop_probs = knn.predict_proba(user_reduced)
@@ -171,7 +176,7 @@ def encode_genotypes_app(df):
     return encode_genotypes(df)
 
 
-def dimensionality_reduction_app(X, algorithm="PCA"):
+def dimensionality_reduction_app(X, algorithm="pca"):
     return dimensionality_reduction(X, algorithm)
 
 

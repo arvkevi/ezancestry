@@ -30,7 +30,7 @@ full_config_file_path = Path(project_directory).joinpath("conf.ini")
 
 config = configparser.ConfigParser()
 
-# make sure the non-1kG default directories have data in them
+# make sure the non-1kg default directories have data in them
 if not any(default_models_directory.iterdir()):
     # pkg_resources copy data from the package to the user's home directory
     logger.info(
@@ -75,10 +75,10 @@ config["directories"] = {
 }
 config["general"] = {
     "population_level": "superpopulation",
-    "aisnps_set": "Kidd",
+    "aisnps_set": "kidd",
 }
 config["dimensionality_reduction"] = {
-    "algorithm": "PCA",
+    "algorithm": "pca",
     "n_components": 3,
 }
 config["nearest_neighbors"] = {
