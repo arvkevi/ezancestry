@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 import umap
-from category_encoders.one_hot import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder
 from cyvcf2 import VCF
-from MulticoreTSNE import MulticoreTSNE as TSNE
+from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-from sklearn.impute import knnImputer
+from sklearn.impute import KNNImputer
 
 
 def get_file_content_as_string(mdfile):
@@ -24,7 +24,7 @@ def get_file_content_as_string(mdfile):
 
 
 def get_1kg_samples(
-    onekg_samples="data/integrated_call_samples_v3.20130502.ALL.panel",
+    onekg_samples="data/samples/integrated_call_samples_v3.20130502.ALL.panel",
 ):
     """Download the sample information for the 1000 Genomes Project
 
@@ -46,7 +46,8 @@ def encode_genotypes(df):
     :return: pandas DataFrame of one-hot encoded columns for genotypes and OHE instance
     :rtype: pandas DataFrame, OneHotEncoder instance
     """
-    ohe = OneHotEncoder(cols=df.columns, handle_missing="return_nan")
+    # ohe = OneHotEncoder(cols=df.columns, handle_missing="return_nan")
+    ohe = OneHotEncoder(sparse=False, handle_unknown="ignore")
     X = ohe.fit_transform(df)
     return pd.DataFrame(X, index=df.index), ohe
 
@@ -64,7 +65,7 @@ def dimensionality_reduction(X, algorithm="pca"):
     n_components = 3
 
     if algorithm == "pca":
-        reducer = pca(n_components=n_components)
+        reducer = PCA(n_components=n_components)
     elif algorithm == "t-SNE":
         reducer = TSNE(n_components=n_components, n_jobs=4)
     elif algorithm == "umap":
@@ -76,7 +77,9 @@ def dimensionality_reduction(X, algorithm="pca"):
         )
     else:
         return None, None
-
+    print(X.shape)
+    print(type(X.values))
+    print(X.values)
     X_reduced = reducer.fit_transform(X.values)
 
     return (
@@ -95,9 +98,7 @@ def filter_user_genotypes(userdf, aisnps_1kg):
     :return: The user's DataFrame of aisnps as columns, The 1kg DataFrame with user appended
     :rtype: pandas DataFrame
     """
-    user_record = pd.DataFrame(
-        index=["your_sample"], columns=aisnps_1kg.columns
-    )
+    user_record = pd.DataFrame(index=["your_sample"], columns=aisnps_1kg.columns)
     for snp in user_record.columns:
         try:
             user_record[snp] = userdf.loc[snp]["genotype"]
@@ -108,14 +109,14 @@ def filter_user_genotypes(userdf, aisnps_1kg):
 
 
 def impute_missing(aisnps_1kg):
-    """Use scikit-learns knnImputer to impute missing genotypes for aisnps
+    """Use scikit-learns KNNImputer to impute missing genotypes for aisnps
 
     :param aisnps_1kg: DataFrame of all samples including user's encoded genotypes.
     :type aisnps_1kg: pandas DataFrame
-    :return: DataFrame with nan values filled in my knnImputer
+    :return: DataFrame with nan values filled in my KNNImputer
     :rtype: pandas DataFrame
     """
-    imputer = knnImputer(n_neighbors=9)
+    imputer = KNNImputer(n_neighbors=9)
     imputed_aisnps = imputer.fit_transform(aisnps_1kg)
     return np.rint(imputed_aisnps[-1])
 
