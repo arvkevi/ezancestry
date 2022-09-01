@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.neighbors import NeighborhoodComponentsAnalysis as nca
 
 from ezancestry.config import models_directory as _models_directory
-
+from ezancestry import __python_version__
 
 def dimensionality_reduction(
     df,
@@ -78,10 +78,16 @@ def dimensionality_reduction(
             else:
                 pass
             df_reduced = reducer.fit_transform(df.values)
-            joblib.dump(
-                reducer,
-                models_directory.joinpath(f"{algorithm}.{aisnps_set}.bin"),
-            )
+            if algorithm == "umap":
+                joblib.dump(
+                    reducer,
+                    models_directory.joinpath(f"{algorithm}.{aisnps_set}.{__python_version__}.bin"),
+                )
+            else:
+                joblib.dump(
+                    reducer,
+                    models_directory.joinpath(f"{algorithm}.{aisnps_set}.bin"),
+                )
         elif algorithm == "nca":
             reducer = nca(
                 n_components=n_components,

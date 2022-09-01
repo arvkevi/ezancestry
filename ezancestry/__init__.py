@@ -1,7 +1,10 @@
 """A Python package to easily predict genetic ancestry"""
 
+import sys
+
 __project__ = "ezancestry"
 __version__ = "0.0.7"
+__python_version__ = f"py{sys.version_info[0]}{sys.version_info[1]}"
 
 
 super_pop_codes = {

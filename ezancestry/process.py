@@ -12,6 +12,7 @@ from ezancestry.config import aisnps_directory as _aisnps_directory
 from ezancestry.config import aisnps_set as _aisnps_set
 from ezancestry.config import models_directory as _models_directory
 from ezancestry.config import samples_directory as _samples_directory
+from ezancestry import __python_version__
 
 warnings.simplefilter(action="ignore", category=pd.errors.DtypeWarning)
 

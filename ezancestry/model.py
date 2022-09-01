@@ -8,7 +8,7 @@ from ezancestry.config import aisnps_set as _aisnps_set
 from ezancestry.config import algorithm as _algorithm
 from ezancestry.config import models_directory as _models_directory
 from ezancestry.config import population_level as _population_level
-
+from ezancestry import __python_version__
 
 def train(
     df,
