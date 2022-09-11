@@ -36,12 +36,12 @@ jobs:
           pip install .
           # run this command to move the data files to the user's home directory
           ezancestry --help
-      # - name: Test with pytest (Ubuntu & macOS)
-      #   if: ${{ matrix.os != 'windows-latest' }}
-      #   run: |
-      #     pytest --cov=ezancestry tests
-      # - name: Test with pytest (Windows)
-      #   if: ${{ matrix.os == 'windows-latest' }}
-      #   working-directory: C:\a\ezancestry\ezancestry
-      #   run: |
-      #     pytest --cov=ezancestry tests
+      - name: Test with pytest (Ubuntu & macOS)
+        if: ${{ matrix.os != 'windows-latest' }}
+        run: |
+          pytest --cov=ezancestry tests
+      - name: Test with pytest (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        working-directory: C:\a\ezancestry\ezancestry
+        run: |
+          pytest --cov=ezancestry tests
