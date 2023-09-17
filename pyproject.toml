@@ -14,23 +14,26 @@ readme = "README.md"
 ezancestry = "ezancestry.commands:app"
 
 [tool.poetry.dependencies]
-python = ">=3.7.1,<3.11"
-cmake = "^3.21.2"
-cyvcf2 = ">=0.30.11,<=0.30.14"
-loguru = "^0.5.3"
+python = ">=3.8,<=3.11.3"
+cmake = ">3.21.2"
+cyvcf2 = ">=0.30.11"
+loguru = ">=0.5.3"
 numpy = "^1.21.2"
 pandas = "^1.3.2"
-plotly = "^5.3.1"
-scikit-learn = "^0.24.2"
-snps = "^2.3.0"
-streamlit = "^0.87.0"
-umap-learn = "^0.5.1"
-typer = "^0.4.0"
+plotly = ">=5.3.1"
+scikit-learn = ">=0.24.2"
+snps = ">=2.3.0"
+streamlit = ">=0.87.0"
+umap-learn = ">=0.5.1"
+typer = ">=0.4.0"
 
 [tool.poetry.dev-dependencies]
 pytest-json-report = "^1.4.1"
 pytest-cov = "^3.0.0"
 pytest = "^6.2.5"
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.25.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
