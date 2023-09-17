@@ -27,14 +27,14 @@ def download_thousand_genomes(thousand_genomes_directory=None):
     if empty_directory:
         if (
             input(
-                "Are you sure you want to download 1000 Genomes data (13GB)? (y/n)"
-            ).lower()
+                "Are you sure you want to download 1000 Genomes data (13GB)? (Y/n) "
+            )
             != "Y"
         ):
             sys.exit("Exiting...")
 
-    ftp_site = "ftp.1000genomes.ebi.ac.uk"
-    filepath = Path("/vol1/ftp/release/20130502/supporting/bcf_files/")
+    ftp_site = "ftp.ebi.ac.uk"
+    filepath = Path("/1000g/ftp/release/20130502/supporting/bcf_files/")
     ftp = ftplib.FTP(ftp_site)
     ftp.login()
     # ftp.cwd(filepath)
