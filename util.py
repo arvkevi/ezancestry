@@ -23,21 +23,6 @@ def get_file_content_as_string(mdfile):
     return mdstring
 
 
-def get_1kg_samples(
-    onekg_samples="data/samples/integrated_call_samples_v3.20130502.ALL.panel",
-):
-    """Download the sample information for the 1000 Genomes Project
-
-    :return: DataFrame of sample-level population information
-    :rtype: pandas DataFrame
-    """
-    dfsamples = pd.read_csv(onekg_samples, sep="\t")
-    dfsamples.set_index("sample", inplace=True)
-    dfsamples.drop(columns=["Unnamed: 4", "Unnamed: 5"], inplace=True)
-    dfsamples.columns = ["population", "super population", "gender"]
-    return dfsamples
-
-
 def encode_genotypes(df):
     """One-hot encode the genotypes
 
