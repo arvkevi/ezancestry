@@ -8,22 +8,11 @@ from loguru import logger
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import StratifiedKFold, cross_validate
 
-from ezancestry.aisnps import extract_aisnps
 from ezancestry.config import aisnps_directory as _aisnps_directory
 from ezancestry.config import aisnps_set as _aisnps_set
-from ezancestry.config import algorithm as _algorithm
-from ezancestry.config import k as _k
 from ezancestry.config import models_directory as _models_directory
-from ezancestry.config import n_components as _n_components
 from ezancestry.config import population_level as _population_level
-from ezancestry.config import samples_directory as _samples_directory
-from ezancestry.config import (
-    thousand_genomes_directory as _thousand_genomes_directory,
-)
-from ezancestry.dimred import dimensionality_reduction
-from ezancestry.fetch import download_thousand_genomes
-from ezancestry.model import predict_ancestry, train
-from ezancestry.process import encode_genotypes, get_1kg_labels, vcf2df
+from ezancestry.model import predict_ancestry
 
 
 def export_performance(
@@ -34,7 +23,6 @@ def export_performance(
     models_directory: str = None,
     aisnps_directory: str = None,
     population_level: str = None,
-    algorithm: str = None,
     aisnps_set: str = None,
     outdir: str = None,
 ):
@@ -51,16 +39,6 @@ def export_performance(
     :type aisnps_directory: str, optional
     :param population_level: [description], defaults to None
     :type population_level: str, optional
-    :param algorithm: [description], defaults to None
-    :type algorithm: str, optional
-    :param n_components: [description], defaults to None
-    :type n_components: int, optional
-    :param k: [description], defaults to None
-    :type k: int, optional
-    :param thousand_genomes_directory: [description], defaults to None
-    :type thousand_genomes_directory: str, optional
-    :param samples_directory: [description], defaults to None
-    :type samples_directory: str, optional
     :param aisnps_set: [description], defaults to None
     :type aisnps_set: str, optional
     :param outdir: Where to write the result files, defaults to models_directory

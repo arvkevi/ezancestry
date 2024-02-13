@@ -10,27 +10,16 @@ from loguru import logger
 from sklearn.model_selection import train_test_split
 
 from ezancestry import super_pop_codes, pop_codes
-from ezancestry.aisnps import extract_aisnps
 from ezancestry.config import aisnps_directory as _aisnps_directory
 from ezancestry.config import aisnps_set as _aisnps_set
-from ezancestry.config import algorithm as _algorithm
-from ezancestry.config import k as _k
 from ezancestry.config import models_directory as _models_directory
-from ezancestry.config import n_components as _n_components
 from ezancestry.config import population_level as _population_level
-from ezancestry.config import samples_directory as _samples_directory
-from ezancestry.config import (
-    thousand_genomes_directory as _thousand_genomes_directory,
-)
-from ezancestry.dimred import dimensionality_reduction
+from ezancestry.fetch import get_thousand_genomes_aisnps
 from ezancestry.evaluate import export_performance
-from ezancestry.fetch import download_thousand_genomes
 from ezancestry.model import predict_ancestry, train
 from ezancestry.process import (
     encode_genotypes,
-    get_1kg_labels,
     process_user_input,
-    vcf2df,
 )
 
 
@@ -55,26 +44,9 @@ def build_model(
         None,
         help="The path to the directory where the aisnps files are located.",
     ),
-    n_components: int = typer.Option(
-        None,
-        help="The number of components to use in the pca dimensionality reduction.",
-    ),
-    k: int = typer.Option(
-        None, help="The number of nearest neighbors to use in the knn model."
-    ),
-    thousand_genomes_directory: str = typer.Option(
-        None, help="The path to the 1000 genomes directory."
-    ),
-    samples_directory: str = typer.Option(
-        None, help="The path to the directory containing the samples."
-    ),
     population_level: PopulationLevel = typer.Option(
         PopulationLevel.super_population,
         help="The granularity of genetic ancestry you want to predict.",
-    ),
-    algorithm: str = typer.Option(
-        None,
-        help="The dimensionality reduction algorithm to use. Use one of pca|umap|nca",
     ),
     aisnps_set: Optional[str] = typer.Option(
         None,
@@ -85,15 +57,14 @@ def build_model(
     ),
 ):
     """
-    For example, if you create a custom aisnp file here: ~/.ezancestry/data/aisnps/custom.aisnp.txt
+    This will create a model for your custom aisnps set using the default pipeline.
+    If you create a custom aisnp file here: ~/.ezancestry/data/aisnps/custom.aisnp.txt
     and then run the build-model command, you will build a model from the snps in that file:
 
     $ ezancestry build-model --aisnps-set custom
 
     See github.com/ezancestry/ezancestry/data/aisnps/custom.aisnp.txt for an example of a custom aisnp file.
-
-    * Note that the 1000 genomes dataset is required for this function to work. *
-
+    
     * Default arguments are from the ~/.ezancestry/conf.ini file. *
     """
 
@@ -103,40 +74,22 @@ def build_model(
         aisnps_directory = _aisnps_directory
     if population_level is None:
         population_level = _population_level
-    if algorithm is None:
-        algorithm = _algorithm
-    if n_components is None:
-        n_components = _n_components
-    if k is None:
-        k = _k
-    if thousand_genomes_directory is None:
-        thousand_genomes_directory = _thousand_genomes_directory
     if aisnps_set is None:
         aisnps_set = _aisnps_set
-    if samples_directory is None:
-        samples_directory = _samples_directory
 
     models_directory = Path(models_directory)
     aisnps_directory = Path(aisnps_directory)
-    samples_directory = Path(samples_directory)
-    thousand_genomes_directory = Path(thousand_genomes_directory)
 
     # download 1kg
-    download_thousand_genomes(thousand_genomes_directory)
-    # extract snps
-    aisnps_file = Path(aisnps_directory).joinpath(f"{aisnps_set}.aisnp.txt")
-    extract_aisnps(thousand_genomes_directory, aisnps_file, aisnps_set)
+    dfsnps = get_thousand_genomes_aisnps(aisnps_directory=aisnps_directory, aisnps_sets=aisnps_set)
 
     # process data
-    dfsamples = get_1kg_labels(samples_directory)
-    vcf_fname = Path(aisnps_directory).joinpath(f"{aisnps_set}.aisnp.1kg.vcf")
-    dfsnps = vcf2df(vcf_fname, dfsamples)
     labels = dfsnps[population_level]
     dfsnps.drop(
         columns=["population", "superpopulation", "gender"], inplace=True
     )
 
-    # split the training and test data
+    # split training and test data
     train_df, test_df, y_train, y_test = train_test_split(
         dfsnps,
         labels,
@@ -234,12 +187,6 @@ def predict(
     k: int = typer.Option(
         None, help="The number of nearest neighbors to use in the knn model."
     ),
-    thousand_genomes_directory: str = typer.Option(
-        None, help="The path to the 1000 genomes directory."
-    ),
-    samples_directory: str = typer.Option(
-        None, help="The path to the directory containing the samples."
-    ),
     algorithm: str = typer.Option(
         None,
         help="The dimensionality reduction algorithm to use. Choose pca|umap|nca",
@@ -268,20 +215,14 @@ def predict(
         n_components = _n_components
     if k is None:
         k = _k
-    if thousand_genomes_directory is None:
-        thousand_genomes_directory = _thousand_genomes_directory
     if aisnps_set is None:
         aisnps_set = _aisnps_set
-    if samples_directory is None:
-        samples_directory = _samples_directory
     if output_directory is None:
         output_directory = Path.cwd()
 
     output_directory = Path(output_directory)
     models_directory = Path(models_directory)
     aisnps_directory = Path(aisnps_directory)
-    samples_directory = Path(samples_directory)
-    thousand_genomes_directory = Path(thousand_genomes_directory)
 
     snpsdf = process_user_input(input_data, aisnps_directory, aisnps_set)
     index = snpsdf.index
@@ -392,7 +333,7 @@ def plot(
     ]
     predictions = predictions[columns]
     aisnps_file = Path(aisnps_directory).joinpath(
-        f"thousand_genomes.{aisnps_set}.dataframe.csv"
+        f"{aisnps_set}.1kG.csv"
     )
     # don't save the results of these predictions
     aisnps_results = predict(
@@ -400,8 +341,6 @@ def plot(
         output_directory=None,
         models_directory=models_directory,
         aisnps_directory=aisnps_directory,
-        thousand_genomes_directory=None,
-        samples_directory=None,
         algorithm=algorithm,
         aisnps_set=aisnps_set,
         write_predictions=False,
@@ -477,12 +416,6 @@ def generate_dependencies(
         None,
         help="The path to the directory where the aisnps files are located.",
     ),
-    thousand_genomes_directory: str = typer.Option(
-        None, help="The path to the 1000 genomes directory."
-    ),
-    samples_directory: str = typer.Option(
-        None, help="The path to the directory containing the samples."
-    ),
 ):
     """
     Generate the data and populate the models in the data/* directories.
@@ -491,15 +424,9 @@ def generate_dependencies(
         models_directory = _models_directory
     if aisnps_directory is None:
         aisnps_directory = _aisnps_directory
-    if thousand_genomes_directory is None:
-        thousand_genomes_directory = _thousand_genomes_directory
-    if samples_directory is None:
-        samples_directory = _samples_directory
 
     models_directory = Path(models_directory)
     aisnps_directory = Path(aisnps_directory)
-    samples_directory = Path(samples_directory)
-    thousand_genomes_directory = Path(thousand_genomes_directory)
 
     k = _k
     n_components = _n_components
@@ -515,8 +442,6 @@ def generate_dependencies(
                     aisnps_directory,
                     n_components,
                     k,
-                    thousand_genomes_directory,
-                    samples_directory,
                     population_level,
                     algorithm,
                     aisnps_set,

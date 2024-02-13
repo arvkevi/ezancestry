@@ -22,8 +22,6 @@ def test_predict_from_file(algorithm):
         aisnps_directory=None,
         n_components=None,
         k=None,
-        thousand_genomes_directory=None,
-        samples_directory=None,
         algorithm=algorithm,
         aisnps_set=None,
     )
