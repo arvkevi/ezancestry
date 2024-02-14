@@ -6,13 +6,23 @@
 		9000
 	],
 	"features": {
-		"ghcr.io/devcontainers-contrib/features/poetry:2": {}
+		"ghcr.io/devcontainers-contrib/features/poetry:2": {},
+		"ghcr.io/devcontainers-contrib/features/ruff:1": {}
+
 	},
 	"customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {
 			"settings": {},
-			"extensions": []
+			"extensions": [
+				"charliermarsh.ruff",
+				"ms-toolsai.jupyter-keymap",
+				"GitHub.copilot",
+				"GitHub.copilot-chat",
+				"ms-toolsai.jupyter",
+				"ms-toolsai.vscode-jupyter-cell-tags",
+				"ms-toolsai.jupyter-renderers"
+			]
 		}
 	}
 }
