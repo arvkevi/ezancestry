@@ -17,10 +17,7 @@ from ezancestry.config import population_level as _population_level
 from ezancestry.fetch import get_thousand_genomes_aisnps
 from ezancestry.evaluate import export_performance
 from ezancestry.model import predict_ancestry, train
-from ezancestry.process import (
-    encode_genotypes,
-    process_user_input,
-)
+from ezancestry.process import process_user_input
 
 
 class PopulationLevel(str, Enum):
