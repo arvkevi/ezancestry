@@ -7,8 +7,8 @@
 	],
 	"features": {
 		"ghcr.io/devcontainers-contrib/features/poetry:2": {},
-		"ghcr.io/devcontainers-contrib/features/ruff:1": {}
-
+		"ghcr.io/devcontainers-contrib/features/ruff:1": {},
+		"ghcr.io/devcontainers/features/python:1": {}
 	},
 	"customizations": {
 		// Configure properties specific to VS Code.
