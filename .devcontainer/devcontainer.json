@@ -1,17 +1,18 @@
 {
-    "name": "Python 3.11 ezancestry",
-	"image": "mcr.microsoft.com/devcontainers/python:0-3.11",
-    "postCreateCommand": "poetry config virtualenvs.in-project true && poetry install",
-    "forwardPorts": [9000],
-    "features": {
-        "ghcr.io/devcontainers-contrib/features/poetry:2": {}
-    },
+	"name": "Python 3.11 ezancestry",
+	"image": "mcr.microsoft.com/devcontainers/python:3.11",
+	"postCreateCommand": "poetry config virtualenvs.in-project true && poetry install",
+	"forwardPorts": [
+		9000
+	],
+	"features": {
+		"ghcr.io/devcontainers-contrib/features/poetry:2": {}
+	},
 	"customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {
 			"settings": {},
-			"extensions": [
-			]
+			"extensions": []
 		}
 	}
 }
