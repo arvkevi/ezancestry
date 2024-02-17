@@ -35,7 +35,7 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
 
     aisnpsdf = pd.read_csv(
         aisnps_directory.joinpath(f"{aisnps_set}.aisnp.txt"),
-        dtype={"rsid": str, "chromosome": str, "position_hg19": int},
+        dtype={"rsid": str, "chromosome": str, "position": int},
         sep="\t",
     )
 
@@ -52,7 +52,7 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
                 columns=[
                     col
                     for col in aisnpsdf.columns
-                    if col not in ["rsid", "chromosome", "position_hg19"]
+                    if col not in ["rsid", "chromosome", "position"]
                 ]
             )
             for filepath in Path(input_data).iterdir():
@@ -140,12 +140,12 @@ def _input_to_dataframe(input_data, aisnpsdf):
 
     snpsdf = snpsdf.reset_index()
     snpsdf.rename(
-        columns={"chrom": "chromosome", "pos": "position_hg19"},
+        columns={"chrom": "chromosome", "pos": "position"},
         inplace=True,
     )
     # subset to aisnps
     snpsdf = aisnpsdf.merge(
-        snpsdf, on=["rsid", "chromosome", "position_hg19"], how="left"
+        snpsdf, on=["rsid", "chromosome", "position"], how="left"
     )
     # inform user how many missing snps
     n_aisnps = snpsdf["genotype"].notnull().sum()

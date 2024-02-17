@@ -63,13 +63,13 @@ def get_thousand_genomes_aisnps(aisnps_directory=None, aisnps_sets="kidd"):
         aisnps_1kg = pd.DataFrame(index=dfsamples["sample"])
         
         # Sort the integers and leave X to the end
-        aisnpsdf.sort_values(by=["chromosome", "position_hg19"], inplace=True,
+        aisnpsdf.sort_values(by=["chromosome", "position"], inplace=True,
                      key=lambda x: x.map(lambda y: int(y) if y.isdigit() else 1000 + ord(y[0])))
         chrom_old = "0"
         for _, aim in aisnpsdf.iterrows():
             rsid = aim["rsid"]
             chrom = aim["chromosome"]
-            pos = aim["position_hg19"]
+            pos = aim["position"]
             logger.info(f"Processing: {rsid} {chrom}:{pos}")
 
             # don't open the file again if we are still in the same chromosome

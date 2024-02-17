@@ -1,4 +1,4 @@
-rsid	chromosome	position_hg19
+rsid	chromosome	position
 rs731257	7	12669251
 rs2946788	11	24010530
 rs3793451	9	71659280

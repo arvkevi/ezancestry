@@ -196,7 +196,7 @@ Create a custom AISNP file here: `~/.ezancestry/data/aisnps/custom.AISNP.txt`. T
 
 The file should look like this:
 ```
-id      chromosome      position_hg19
+id      chromosome      position
 rs731257        7       12669251
 rs2946788       11      24010530
 rs3793451       9       71659280
