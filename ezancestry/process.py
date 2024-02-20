@@ -1,15 +1,12 @@
 import warnings
 from pathlib import Path
 
-import joblib
 import pandas as pd
 from loguru import logger
-from sklearn.preprocessing import OneHotEncoder
 from snps import SNPs
 
 from ezancestry.config import aisnps_directory as _aisnps_directory
 from ezancestry.config import aisnps_set as _aisnps_set
-from ezancestry.config import models_directory as _models_directory
 
 warnings.simplefilter(action="ignore", category=pd.errors.DtypeWarning)
 
@@ -44,7 +41,7 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
     except TypeError:
         input_data_is_pathlike = False
 
-    # If the user-submitted input ata is a directory, loop over all the files
+    # If the user-submitted input data is a directory, loop over all the files
     # to create a DataFrame of all the input data.
     if input_data_is_pathlike:
         if Path(input_data).is_dir():
@@ -65,7 +62,8 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
                     logger.warning(
                         f"Skipping {filepath} because it was not valid"
                     )
-
+            for col in snpsdf.columns:
+                snpsdf[col] = snpsdf[col].astype("object")
             return snpsdf
 
         # The user-submitted input data is a single file.
@@ -74,8 +72,11 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
             input_data = Path(input_data)
             try:
                 snpsdf = _input_to_dataframe(input_data, aisnpsdf)
+                logger.info(snpsdf)
                 # SNPs will try to read the DataFrame file
                 if snpsdf is not None:
+                    for col in snpsdf.columns:
+                        snpsdf[col] = snpsdf[col].astype("object")
                     return snpsdf
                 logger.debug(
                     "input_data is not a valid SNPs format, that's ok, trying to read as a pre-formatted DataFrame"
@@ -97,6 +98,7 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
                 for col in snpsdf.columns[1:]:
                     if col.startswith("rs"):
                         cols_to_keep.append(col)
+                        snpsdf[col] = snpsdf[col].astype("object")
                 return snpsdf[cols_to_keep]
             except:
                 raise ValueError(
@@ -104,7 +106,9 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
                 )
     else:
         snpsdf = _input_to_dataframe(input_data, aisnpsdf)
-
+    
+    for col in snpsdf.columns:
+        snpsdf[col] = snpsdf[col].astype("object")
     return snpsdf
 
 

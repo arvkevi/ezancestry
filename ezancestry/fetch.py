@@ -30,7 +30,7 @@ def get_thousand_genomes_aisnps(aisnps_directory=None, aisnps_sets="kidd"):
         # shortcut if aisnps is a string and it exists
         aisnps_1kg_filename = aisnps_directory.joinpath(f"{aisnps_sets}.1kG.csv")
         try:
-            aisnps_1kg = pd.read_csv(aisnps_1kg_filename)
+            aisnps_1kg = pd.read_csv(aisnps_1kg_filename, dtype=str)
             logger.info(f"Loaded: {aisnps_sets}.1kG.csv")
             return aisnps_1kg
         except FileNotFoundError:
@@ -100,6 +100,8 @@ def get_thousand_genomes_aisnps(aisnps_directory=None, aisnps_sets="kidd"):
             logger.info(f"Saved: {aisnps_set}.1kG.csv")
         else:
             logger.info(f"File already exists: {aisnps_set}.1kG.csv")
+        for col in aisnps_1kg.columns:
+            aisnps_1kg[col] = aisnps_1kg[col].astype("object")
         return aisnps_1kg
 
 if __name__ == "__main__":

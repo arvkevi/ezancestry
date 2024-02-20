@@ -4,7 +4,6 @@ import joblib
 from loguru import logger
 
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.impute import KNNImputer
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
@@ -18,7 +17,6 @@ import numpy as np
 
 DEFAULT_PIPELINE = make_pipeline(
     OneHotEncoder(handle_unknown="ignore", sparse_output=False, dtype=np.int8),
-    KNNImputer(n_neighbors=7),
     PCA(n_components=10),
     KNeighborsClassifier(n_neighbors=11, weights="distance", n_jobs=4),
 )

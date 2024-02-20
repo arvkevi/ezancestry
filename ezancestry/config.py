@@ -31,7 +31,7 @@ if not any(default_models_directory.iterdir()):
         f"Copying models to {default_models_directory}, this only happens once..."
     )
     for fileobj in pkg_resources.contents("data.models"):
-        if not str(fileobj).endswith(".bin"):
+        if not str(fileobj).endswith(".pkl"):
             continue
         with pkg_resources.path("data.models", fileobj) as file_to_copy:
             shutil.copy(file_to_copy, default_models_directory)
