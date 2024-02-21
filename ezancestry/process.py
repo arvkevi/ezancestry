@@ -72,7 +72,6 @@ def process_user_input(input_data, aisnps_directory=None, aisnps_set=None):
             input_data = Path(input_data)
             try:
                 snpsdf = _input_to_dataframe(input_data, aisnpsdf)
-                logger.info(snpsdf)
                 # SNPs will try to read the DataFrame file
                 if snpsdf is not None:
                     for col in snpsdf.columns:
@@ -123,6 +122,7 @@ def _input_to_dataframe(input_data, aisnpsdf):
     :rtype: pandas DataFrame
     """
     # try to read a single file
+    logger.info(input_data)
     try:
         is_pathlike = bool(Path(input_data))
     except TypeError:
@@ -131,7 +131,7 @@ def _input_to_dataframe(input_data, aisnpsdf):
         try:
             snpsobj = SNPs(str(input_data))
             if snpsobj.count == 0:
-                logger.debug(f"No snps found in the input_data")
+                logger.debug(f"No snps found in the input_data, that could be OK if you have a csv")
                 return None
             snpsdf = snpsobj.snps
         except FileNotFoundError:

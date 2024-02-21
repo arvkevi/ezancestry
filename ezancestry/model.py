@@ -44,7 +44,6 @@ def train(
         
         DEFAULT_PIPELINE = make_pipeline(
             OneHotEncoder(handle_unknown="ignore", sparse_output=False),
-            KNNImputer(n_neighbors=7),
             PCA(n_components=3),
             KNeighborsClassifier(n_neighbors=11, weights="distance", n_jobs=4),
         )
@@ -109,7 +108,7 @@ def predict_ancestry(df, trained_model):
     :param df: The df_encoded or df_reduced DataFrame to predict on.
     :type df: pandas DataFrame
     :param trained_model: Path to the trained model, or the model itself
-    :type trained_model: str or fit KNeighborsClassifier
+    :type trained_model: str or fit scikit-learn pipeline
     :return: A dataframe with the predictions
     :rtype: pandas DataFrame
     """
@@ -118,14 +117,13 @@ def predict_ancestry(df, trained_model):
         model = joblib.load(str(trained_model))
         logger.info(f"Successfully loaded trained model: {trained_model}")
     except Exception as e:
-        logger.warning(f"Could not load the model: {e}")
         model = trained_model
         logger.info("Using user-provided model")
 
     user_pop = model.predict(ancestrydf)
     user_pop_probs = model.predict_proba(ancestrydf)
 
-    ancestrydf["predicted_population"] = user_pop
+    ancestrydf["predicted_ancestry"] = user_pop
     ancestrydf[model.classes_] = user_pop_probs
 
     return ancestrydf

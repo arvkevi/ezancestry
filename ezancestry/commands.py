@@ -16,8 +16,10 @@ from ezancestry.config import models_directory as _models_directory
 from ezancestry.config import population_level as _population_level
 from ezancestry.fetch import get_thousand_genomes_aisnps
 from ezancestry.evaluate import export_performance
-from ezancestry.model import predict_ancestry, train
+from ezancestry.model import train as train_model, predict_ancestry
 from ezancestry.process import process_user_input
+
+import joblib
 
 
 class PopulationLevel(str, Enum):
@@ -31,9 +33,39 @@ app = typer.Typer(
     "ancestry-informative snp set (aisnps) at predicting genetic ancestry."
 )
 
+@app.command(short_help="Command to get the genetic variants from the 1000 genomes project into a DataFrame stored as a csv.")
+def fetch(
+    aisnps_directory: str = typer.Option(
+        None,
+        help="The path to the directory where the aisnps files are located.",
+    ),
+    aisnps_sets: Optional[str] = typer.Option(
+        "kidd"
+        "The name of the aisnp set to use. To start, choose either "
+        "'kidd' or 'seldin'. The default value in conf.ini is 'kidd'."
+    ),
+):
+    """
+    This command will download the 1000 genomes project data and save it as a csv file in the aisnps directory.
+    If you have a file of AISNPs named custom.aisnp.txt in the aisnps directory, you can run the following command to download the 1000 genomes project data for your custom AISNPs:
+
+    $ ezancestry fetch --aisnps-sets custom
+    """
+    if aisnps_directory is None:
+        aisnps_directory = _aisnps_directory
+    aisnps_directory = Path(aisnps_directory)
+
+    try:
+        get_thousand_genomes_aisnps(aisnps_directory=aisnps_directory, aisnps_sets=aisnps_sets)
+    except Exception as e:
+        logger.error(e)
+        return
+
+    return
+
 
 @app.command(short_help="Build and evaluate a new model from a set of aisnps.")
-def build_model(
+def train(
     models_directory: str = typer.Option(
         None, help="The path to the directory to save the model to."
     ),
@@ -56,9 +88,9 @@ def build_model(
     """
     This will create a model for your custom aisnps set using the default pipeline.
     If you create a custom aisnp file here: ~/.ezancestry/data/aisnps/custom.aisnp.txt
-    and then run the build-model command, you will build a model from the snps in that file:
+    and then run the train command, you will build a model from the snps in that file:
 
-    $ ezancestry build-model --aisnps-set custom
+    $ ezancestry train --aisnps-set custom
 
     See github.com/ezancestry/ezancestry/data/aisnps/custom.aisnp.txt for an example of a custom aisnp file.
     
@@ -95,59 +127,25 @@ def build_model(
         random_state=42,
     )
 
-    # fit & write models on 1kg
-    dfencoded_train = encode_genotypes(
+    model = train_model(
         train_df,
-        aisnps_set=aisnps_set,
-        overwrite_encoder=True,
-        models_directory=models_directory,
-    )
-    dfencoded_test = encode_genotypes(
-        test_df,
-        aisnps_set=aisnps_set,
-        overwrite_encoder=False,
-        models_directory=models_directory,
-    )
-
-    dfreduced_train = dimensionality_reduction(
-        dfencoded_train,
-        algorithm=algorithm,
-        aisnps_set=aisnps_set,
-        models_directory=models_directory,
-        overwrite_model=True,
-        labels=y_train,
-        population_level=population_level,
-    )
-    dfreduced_test = dimensionality_reduction(
-        dfencoded_test,
-        algorithm=algorithm,
-        aisnps_set=aisnps_set,
-        models_directory=models_directory,
-        overwrite_model=False,
-        labels=y_train,
-        population_level=population_level,
-    )
-
-    knn_model = train(
-        dfreduced_train,
         y_train,
-        algorithm=algorithm,
-        aisnps_set=aisnps_set,
-        k=k,
-        population_level=population_level,
+        sklearn_pipeline=None,
         models_directory=models_directory,
+        aisnps_set=aisnps_set,
+        population_level=population_level,
         overwrite_model=True,
     )
 
     cv_report, holdout_report = export_performance(
-        dfreduced_train,
-        dfreduced_test,
+        train_df,
+        test_df,
         y_train,
         y_test,
+        model=model,
         models_directory=models_directory,
         aisnps_directory=aisnps_directory,
         population_level=population_level,
-        algorithm=algorithm,
         aisnps_set=aisnps_set,
     )
 
@@ -177,17 +175,6 @@ def predict(
         None,
         help="The path to the directory where the aisnps files are located.",
     ),
-    n_components: int = typer.Option(
-        None,
-        help="The number of components to use in the pca dimensionality reduction.",
-    ),
-    k: int = typer.Option(
-        None, help="The number of nearest neighbors to use in the knn model."
-    ),
-    algorithm: str = typer.Option(
-        None,
-        help="The dimensionality reduction algorithm to use. Choose pca|umap|nca",
-    ),
     aisnps_set: Optional[str] = typer.Option(
         None,
         help="The name of the aisnp set to use. To start, choose either "
@@ -206,76 +193,60 @@ def predict(
         models_directory = _models_directory
     if aisnps_directory is None:
         aisnps_directory = _aisnps_directory
-    if algorithm is None:
-        algorithm = _algorithm
-    if n_components is None:
-        n_components = _n_components
-    if k is None:
-        k = _k
     if aisnps_set is None:
         aisnps_set = _aisnps_set
     if output_directory is None:
         output_directory = Path.cwd()
-
+    
     output_directory = Path(output_directory)
-    models_directory = Path(models_directory)
+    models_directory = Path(_models_directory)
     aisnps_directory = Path(aisnps_directory)
+    overall_predictions = pd.DataFrame()
+    for population_level in ["population", "superpopulation"]:
+        # Load an aisnps_set model from the default models directory
+        model_path = models_directory.joinpath(
+            f"{aisnps_set}_{population_level}.pkl"
+        )
 
-    snpsdf = process_user_input(input_data, aisnps_directory, aisnps_set)
-    index = snpsdf.index
-    snpsdf = encode_genotypes(
-        snpsdf,
-        aisnps_set=aisnps_set,
-        models_directory=models_directory,
-        aisnps_directory=aisnps_directory,
-        overwrite_encoder=False,
-    )
-    pop_predictions = pd.DataFrame()
-    superpop_predictions = pd.DataFrame()
-    for pop_level in PopulationLevel:
-        pop_level = pop_level
-        dimreddf = dimensionality_reduction(
-            snpsdf,
-            algorithm=algorithm,
-            aisnps_set=aisnps_set,
-            population_level=pop_level,
-            models_directory=models_directory,
-            overwrite_model=False,
-        )
-        knn = models_directory.joinpath(
-            f"knn.{algorithm}.{aisnps_set}.{pop_level}.bin"
-        )
-        pop_level_predictions = predict_ancestry(dimreddf, knn)
-        if pop_level == "population":
-            pop_predictions = pop_predictions.append(pop_level_predictions)
-        else:
-            superpop_predictions = superpop_predictions.append(
-                pop_level_predictions
+        snpsdf = process_user_input(input_data, aisnps_directory, aisnps_set)
+        index = snpsdf.index
+        try:
+            model = joblib.load(model_path)
+        except FileNotFoundError:
+            logger.error(
+                f"Could not find the model at {model_path}. Please train a model first."
             )
-    predictions = pop_predictions.merge(
-        superpop_predictions.drop(columns=["x", "y", "z"]),
-        left_index=True,
-        right_index=True,
-        suffixes=("_population", "_superpopulation"),
-    )
+        snpsdf = snpsdf[model.feature_names_in_]
 
-    predictions.rename(
-        columns={"x": "component1", "y": "component2", "z": "component3"},
-        inplace=True,
-    )
-    predictions.set_index(index, inplace=True)
-    predictions["population_description"] = predictions[
-        "predicted_population_population"
-    ].apply(lambda row: pop_codes[row])
-    predictions["superpopulation_name"] = predictions[
-        "predicted_population_superpopulation"
-    ].apply(lambda row: super_pop_codes[row])
+        predictions = predict_ancestry(snpsdf, model)
+        predictions.rename(columns={"predicted_ancestry": f"predicted_ancestry_{population_level}"}, inplace=True)
+        predictions.index = index
+        if population_level == "superpopulation":
+            # just get the predictions
+            predictions = predictions[model.classes_.tolist() + ["predicted_ancestry_superpopulation"]]
+        overall_predictions = pd.concat([overall_predictions, predictions], axis=1)
+
+
+    try:
+        if "PCA" or "pca" in model.named_steps:
+            for i, step in enumerate(model.named_steps):
+                if "PCA" in step or "pca" in step:
+                    break
+            pca = model[:i+1].transform(snpsdf)
+            overall_predictions["component1"] = pca[:, 0]
+            overall_predictions["component2"] = pca[:, 1]
+            overall_predictions["component3"] = pca[:, 2]
+    except Exception as e:
+        logger.debug(e)
+        logger.warning(
+            "The model does not have PCA as a step, so no PCA components were added to the predictions. Or there were not enough PC components to add to the predictions."
+        )
 
     if write_predictions:
-        predictions.to_csv(output_directory.joinpath("predictions.csv"))
+        overall_predictions.to_csv(output_directory.joinpath("predictions.csv"))
         # store the settings in a commented header
         line = (
-            f"#{algorithm},{aisnps_set},{models_directory},{aisnps_directory}"
+            f"#{aisnps_set},{model_path},{aisnps_directory}"
         )
         with open(output_directory.joinpath("predictions.csv"), "r+") as f:
             content = f.read()
@@ -286,7 +257,7 @@ def predict(
             f"Predictions written to {output_directory}/predictions.csv"
         )
 
-    return predictions
+    return overall_predictions
 
 
 @app.command(
@@ -316,7 +287,7 @@ def plot(
     with open(predictions_file, "r") as f:
         for line in f:
             if line.startswith("#"):
-                (algorithm, aisnps_set, models_directory, aisnps_directory,) = (
+                (aisnps_set, models_directory, aisnps_directory,) = (
                     line.strip("#").strip("\n").split(",")
                 )
 
@@ -325,8 +296,8 @@ def plot(
         "component1",
         "component2",
         "component3",
-        "predicted_population_population",
-        "predicted_population_superpopulation",
+        "predicted_ancestry_population",
+        "predicted_ancestry_superpopulation",
     ]
     predictions = predictions[columns]
     aisnps_file = Path(aisnps_directory).joinpath(
@@ -338,7 +309,6 @@ def plot(
         output_directory=None,
         models_directory=models_directory,
         aisnps_directory=aisnps_directory,
-        algorithm=algorithm,
         aisnps_set=aisnps_set,
         write_predictions=False,
     )
@@ -359,9 +329,9 @@ def plot(
     df.loc[df["label"] == "user_uploaded_sample", "size"] = 150
 
     if population_level == "superpopulation":
-        population_level_column = "predicted_population_superpopulation"
+        population_level_column = "predicted_ancestry_superpopulation"
     else:
-        population_level_column = "predicted_population_population"
+        population_level_column = "predicted_ancestry_population"
 
     fig = px.scatter_3d(
         df,
@@ -400,46 +370,3 @@ def plot(
 
     return fig
 
-
-@app.command(
-    short_help="Generate the data and populate the models in the data/* directories"
-)
-def generate_dependencies(
-    models_directory: str = typer.Option(
-        None,
-        help="The path to the directory where the model files are located.",
-    ),
-    aisnps_directory: str = typer.Option(
-        None,
-        help="The path to the directory where the aisnps files are located.",
-    ),
-):
-    """
-    Generate the data and populate the models in the data/* directories.
-    """
-    if models_directory is None:
-        models_directory = _models_directory
-    if aisnps_directory is None:
-        aisnps_directory = _aisnps_directory
-
-    models_directory = Path(models_directory)
-    aisnps_directory = Path(aisnps_directory)
-
-    k = _k
-    n_components = _n_components
-    algorithms = ["pca", "umap", "nca"]
-    population_levels = ["population", "superpopulation"]
-    aisnps_sets = ["kidd", "seldin"]
-
-    for algorithm in algorithms:
-        for population_level in population_levels:
-            for aisnps_set in aisnps_sets:
-                _, _ = build_model(
-                    models_directory,
-                    aisnps_directory,
-                    n_components,
-                    k,
-                    population_level,
-                    algorithm,
-                    aisnps_set,
-                )

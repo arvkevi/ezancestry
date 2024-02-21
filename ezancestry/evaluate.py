@@ -7,6 +7,7 @@ import typer
 from loguru import logger
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import StratifiedKFold, cross_validate
+from sklearn.base import BaseEstimator
 
 from ezancestry.config import aisnps_directory as _aisnps_directory
 from ezancestry.config import aisnps_set as _aisnps_set
@@ -20,6 +21,7 @@ def export_performance(
     df_test: pd.DataFrame,
     y_train: Union[pd.Series, pd.DataFrame],
     y_test: Union[pd.Series, pd.DataFrame],
+    model: BaseEstimator,
     models_directory: str = None,
     aisnps_directory: str = None,
     population_level: str = None,
@@ -33,6 +35,10 @@ def export_performance(
     :type df_train: pd.DataFrame
     :param df_test: DataFrame of reduced dimensionality test data.
     :type df_test: pd.DataFrame
+    :param y_train: np.array of training labels
+    :type y_train: np.array or pd.Series
+    :param y_test: np.array of test labels
+    :type y_test: np.array or pd.Series
     :param models_directory: [description], defaults to None
     :type models_directory: str, optional
     :param aisnps_directory: [description], defaults to None
@@ -51,8 +57,6 @@ def export_performance(
         aisnps_directory = _aisnps_directory
     if population_level is None:
         population_level = _population_level
-    if algorithm is None:
-        algorithm = _algorithm
     if aisnps_set is None:
         aisnps_set = _aisnps_set
     if outdir is None:
@@ -65,14 +69,8 @@ def export_performance(
     population_level = (
         population_level.replace("-", "").replace(" ", "").lower()
     )
-    algorithm = algorithm.lower()
     aisnps_set = aisnps_set.lower()
 
-    # Load the pre-trained model
-    model = models_directory.joinpath(
-        f"knn.{algorithm}.{aisnps_set}.{population_level}.bin"
-    )
-    model = joblib.load(model)
     logger.info("Predicting ancestry for evaluation...")
     dftrain_results = predict_ancestry(df_train, model)
     dftest_results = predict_ancestry(df_test, model)
@@ -91,7 +89,7 @@ def export_performance(
     )
     # Save the CV results
     cv_results_file = outdir.joinpath(
-        f"knn.{algorithm}.{aisnps_set}.{population_level}.cv.csv"
+        f"{aisnps_set}.{population_level}.cv_results.csv"
     )
     logger.info(f"Writing cross validation results to {cv_results_file}...")
     cv_results = pd.DataFrame(cv_results)
@@ -103,7 +101,7 @@ def export_performance(
 
     # Evaluate on the held out test set
     logger.info("Evaluating on the held out test set...")
-    y_pred = dftest_results["predicted_population"]
+    y_pred = dftest_results[f"predicted_ancestry_{population_level}"]
 
     holdout_results = pd.DataFrame(
         classification_report(
@@ -111,7 +109,7 @@ def export_performance(
         )
     )
     holdout_results_file = outdir.joinpath(
-        f"knn.{algorithm}.{aisnps_set}.{population_level}.holdout.csv"
+        f"{aisnps_set}.{population_level}.holdout_results.csv"
     )
     logger.info(
         f"Writing holdout validation results to {holdout_results_file}..."

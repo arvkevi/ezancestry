@@ -11,7 +11,7 @@ from ezancestry.config import aisnps_directory as _aisnps_directory
 # This should go from original 1000 Genomes vcf to aisnps df
 
 def get_thousand_genomes_aisnps(aisnps_directory=None, aisnps_sets="kidd"):
-    """Downloads the relevant 1000 Genomes genotypes.
+    """Downloads the relevant 1000 Genomes genotypes if necessary and returns a DataFrame of the AISNPs.
 
     :param aisnps_directory: Full file path to a directory where you want to store the 1000 Genomes AISNPs data.
     :type aisnps_directory: str
@@ -38,7 +38,6 @@ def get_thousand_genomes_aisnps(aisnps_directory=None, aisnps_sets="kidd"):
         aisnps_sets = [aisnps_sets]
 
     vcf_filepath = "https://ftp.ebi.ac.uk/1000g/ftp/release/20130502/"
-
 
 
     # Read the 1kg sample information from remote
