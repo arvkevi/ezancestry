@@ -1,6 +1,6 @@
 # Details
 
-Depending on which company performed your genotyping, your sample might be missing information for some of the 55 (or 128) **AISNPs**. There is a basic implementation of scikit-learn's `KNNImputer` to impute missing genotypes in your sample based on your nearest neighbors in the feature-space.
+Depending on which company performed your genotyping, your sample might be missing information for some of the 55 (or 128) **AISNPs**.
 
 * To show a table of your genotypes at the AISNP locations, check **Show Your Genotypes**.
 
@@ -23,13 +23,7 @@ The subset of `SNPs` were chosen from two publications which identified **AISNPs
 * `PCA`: *Principal Component Analysis*
   * Fastest
   * [scikit-learn implementation](https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html)
-* `T-SNE`: *t-Distributued Stochastic Neighbor Embedding*
-  * Slow
-  * [sckit-learn implementation](https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html) -- *not used*
-  * [Multicore-TSNE implementation](https://github.com/DmitryUlyanov/Multicore-TSNE) -- *used here*
-* `UMAP`: *Uniform Manifold Approximation and Projection*
-  * Faster than t-SNE.
-  * [umap-learn implementation](https://umap-learn.readthedocs.io/en/latest/)
+
 
 **Population Resolution**
 * `Super Population`: One of {AFR, AMR, EAS, EUR, SAS}.
