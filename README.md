@@ -1,12 +1,14 @@
 # ezancestry
+
 ![Build](https://github.com/arvkevi/ezancestry/actions/workflows/ci.yml/badge.svg)  
 
-Easily visualize your direct-to-consumer genetics next to 2500+ samples from the 1000 genomes project. Evaluate the performance of a custom set of ancestry-informative snps (AISNPs) at classifying the genetic ancestry of the 1000 genomes samples using a machine learning model. 
+Easily visualize your direct-to-consumer genetics next to 2500+ samples from the 1000 genomes project. Evaluate the performance of a custom set of ancestry-informative snps (AISNPs) at classifying the genetic ancestry of the 1000 genomes samples using a machine learning model.
 
 A subset of 1000 Genomes Project samples' single nucleotide polymorphism(s), or, SNP(s) have been parsed from the [publicly available `.bcf` files](ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/supporting/bcf_files/).  
 The subset of `SNPs`, AISNPs (ancestry-informative snps), were chosen from two publications:
-  * Set of 55 AISNPs. [Progress toward an efficient panel of SNPs for ancestry inference](https://www.ncbi.nlm.nih.gov/pubmed?db=pubmed&cmd=Retrieve&dopt=citation&list_uids=24508742). Kidd et al. 2014
-  * Set of 128 AISNPs. [Ancestry informative marker sets for determining continental origin and admixture proportions in common populations in America.](https://www.ncbi.nlm.nih.gov/pubmed?cmd=Retrieve&dopt=citation&list_uids=18683858). Kosoy et al. 2009 (Seldin Lab)
+
+* Set of 55 AISNPs. [Progress toward an efficient panel of SNPs for ancestry inference](https://www.ncbi.nlm.nih.gov/pubmed?db=pubmed&cmd=Retrieve&dopt=citation&list_uids=24508742). Kidd et al. 2014
+* Set of 128 AISNPs. [Ancestry informative marker sets for determining continental origin and admixture proportions in common populations in America.](https://www.ncbi.nlm.nih.gov/pubmed?cmd=Retrieve&dopt=citation&list_uids=18683858). Kosoy et al. 2009 (Seldin Lab)
 
 ezancestry ships with pretrained k-nearest neighbor models for all combinations of following:
 
@@ -18,7 +20,6 @@ ezancestry ships with pretrained k-nearest neighbor models for all combinations 
  
     * principal component analysis (PCA)
 
-
 ![image](images/ezancestry.gif)
 
 ## Table of Contents
@@ -26,15 +27,14 @@ ezancestry ships with pretrained k-nearest neighbor models for all combinations 
 * [Installation](#installation)
 * [Config](#config)
 * [Usage](#usage)
-    * [command line tool](#command-line-interface)
-        * [predict](#predict)
-        * [plot](#plot)
-        * [generate-dependencies](#generate-dependencies)
-        * [build-model](#build-model)
-    * [Python API](#python-api)
+  * [command line tool](#command-line-interface)
+    * [fetch](#fetch)
+    * [predict](#predict)
+    * [plot](#plot)
+    * [train](#train)
+  * [Python API](#python-api)
 * [Visualization](#visualization)
 * [Contributing](#contributing)
-
 
 ## Installation
 
@@ -109,7 +109,9 @@ Options:
 
 ## Usage
 
-ezancestry can be used as a command-line tool or as a Python library. ezancestry `predict` comes with pre-trained models when `--aisnps-set="Kidd"` (default) or `--aisnps-set="Seldin"`.`
+ezancestry can be used as a command-line tool or as a Python library.
+
+`ezancestry predict` comes with pre-trained models when `--aisnps-set=kidd` or `--aisnps-set=seldin`.`
 
 ![image](images/ezancestry.drawio.png)
 
@@ -117,10 +119,10 @@ ezancestry can be used as a command-line tool or as a Python library. ezancestry
 
 There are four commands available:
 
-1. `predict`: predict the genetic ancestry of a sample or cohort of samples using the nearest neighbors model.
-2. `plot`: plot the genetic ancestry of samples using only the output of `predict`.
-3. `fetch`: generate the dependencies for `build-model`.
-4. `train`: build a nearest neighbors model from the 1000 genomes data using a custom set of AISNPs.
+1. `fetch`: generate a csv file with all the 1000 Genome samples (rows) at the specified AISNPs locations (columns).
+2. `predict`: predict the genetic ancestry of a sample or cohort of samples using the nearest neighbors model.
+3. `plot`: plot the genetic ancestry of samples using the output of `predict`.
+4. `train`: build a k-nearest neighbors model from the 1000 genomes data using a custom set of AISNPs.
 
 Use the commands in the following way:
 
@@ -178,6 +180,7 @@ This command will build all the necessary models to visualize and predict the 10
 Create a custom AISNP file here: `~/.ezancestry/data/aisnps/custom.AISNP.txt`. The prefix of the filename, `custom`, can be whatever you want. Note that this value is used as the `aisnps-set` keyword argument for other ezancestry commands.
 
 The file should look like this:
+
 ```
 id      chromosome      position
 rs731257        7       12669251
