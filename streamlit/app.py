@@ -1,69 +1,65 @@
 import warnings
+from pathlib import Path
+import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
-from sklearn.neighbors import KNeighborsClassifier
 from snps import SNPs
-from util import (
-    dimensionality_reduction,
-    encode_genotypes,
-    filter_user_genotypes,
-    get_1kg_samples,
-    impute_missing,
-    vcf2df,
-)
+from ezancestry.fetch import get_thousand_genomes_aisnps
+from ezancestry.process import process_user_input
+from ezancestry.commands import predict
 
 import streamlit as st
+import joblib
 
 warnings.filterwarnings("ignore")
 st.set_option("deprecation.showfileUploaderEncoding", False)
 
+data_dir = Path(__file__).parent.parent / "data"
+
+import matplotlib.cm as cm
+import matplotlib.colors
+cmap = cm.get_cmap('tab20', 20)
+hex_colors = []
+for i in range(cmap.N):
+    rgba = cmap(i)
+    hex_colors.append(matplotlib.colors.rgb2hex(rgba))
 
 def main():
     # Render the readme as markdown using st.markdown.
     readme_text = st.markdown(get_file_content_as_string("intro.md"))
-
-    # get the 1000 genomes samples
-    dfsamples = get_1kg_samples_app()
 
     # Once we have the dependencies, add a selector for the app mode on the sidebar.
     st.sidebar.title("Visualization Settings")
     # select which set of SNPs to explore
     aisnp_set = st.sidebar.radio(
         "Set of ancestry-informative SNPs:",
-        ("kidd et al. 55 aisnps", "seldin et al. 128 aisnps"),
+        ("Kidd et al. 55 aisnps", "Seldin et al. 128 aisnps"),
     )
-    if aisnp_set == "kidd et al. 55 aisnps":
-        aisnps_1kg = vcf2df_app("data/aisnps/kidd.aisnp.1kg.vcf", dfsamples)
+    if aisnp_set == "Kidd et al. 55 aisnps":
+        aisnp_set = "kidd"
+        filename = f"{data_dir}/aisnps/kidd.1kG.csv"
+        aisnps_1kg = pd.read_csv(filename, dtype=str)
         n_aisnps = 55
-    elif aisnp_set == "seldin et al. 128 aisnps":
-        aisnps_1kg = vcf2df_app("data/aisnps/seldin.aisnp.1kg.vcf", dfsamples)
+    elif aisnp_set == "Seldin et al. 128 aisnps":
+        aisnp_set = "seldin"
+        filename = f"{data_dir}/aisnps/seldin.1kG.csv"
+        aisnps_1kg = pd.read_csv(filename, dtype=str)
         n_aisnps = 128
-
-    # Encode 1kg data
-    X_encoded, encoder = encode_genotypes_app(aisnps_1kg)
-    # Dimensionality reduction
-    dimensionality_reduction_method = st.sidebar.radio(
-        "Dimensionality reduction technique:", ("pca", "umap", "t-SNE")
-    )
-    # perform dimensionality reduction on the 1kg set
-    X_reduced, reducer = dimensionality_reduction_app(
-        X_encoded, algorithm=dimensionality_reduction_method
-    )
+    
+    # aisnps_1kg.set_index("sample", inplace=True)
 
     # Which population to plot
     population_level = st.sidebar.radio(
-        "Population Resolution:", ("super population", "population")
+        "Population Resolution:", ("superpopulation", "population")
     )
-
-    # predicted population
-    knn = KNeighborsClassifier(n_neighbors=9, weights="distance", n_jobs=2)
 
     # upload the user genotypes file
     user_file = st.sidebar.file_uploader("Upload your genotypes:")
     # Collapsable user aisnps DataFrame
     if user_file is not None:
+        col1, col2 = st.columns([4, 1])
         try:
             with st.spinner("Uploading your genotypes..."):
                 userdf = SNPs(user_file.getvalue()).snps
@@ -73,46 +69,40 @@ def main():
             )
             user_file = None
 
-        # filter and encode the user record
-        user_record, aisnps_1kg = filter_user_genotypes_app(userdf, aisnps_1kg)
-        user_n_missing = (
-            user_record.drop(columns=["super population", "population", "gender"])
-            .isnull()
-            .sum(axis=1)["your_sample"]
-        )
-        user_encoded = encoder.transform(user_record)
-        X_encoded = np.concatenate((X_encoded, user_encoded))
+        # predict the population for the user sample
+        aisnps_predictions = predict(input_data=filename, output_directory=None, write_predictions=False, models_directory=None, aisnps_directory=None, aisnps_set=aisnp_set)
+        user_predictions = predict(input_data=userdf, output_directory=None, write_predictions=False, models_directory=None, aisnps_directory=None, aisnps_set=aisnp_set)
         del userdf
-
-        # impute the user record and reduce the dimensions
-        user_imputed = impute_missing(X_encoded)
-        user_reduced = reducer.transform([user_imputed])
-        # fit the knn before adding the user sample
-        knn.fit(X_reduced, dfsamples[population_level])
+        # st.write(user_predictions[])
+        col2.subheader("Your Genotypes")
 
         # concat the 1kg and user reduced arrays
-        X_reduced = np.concatenate((X_reduced, user_reduced))
-        dfsamples.loc["me"] = ["me"] * 3
+        X_reduced = np.concatenate((aisnps_predictions[["component1", "component2", "component3"]].values, user_predictions[["component1", "component2", "component3"]].values))
+        aisnps_1kg.loc["me", ["population", "superpopulation", "gender"]] = ["me"] * 3
 
         # plot
-        plotly_3d = plot_3d(X_reduced, dfsamples, population_level)
+        plotly_3d = plot_3d(X_reduced, aisnps_1kg[["population", "superpopulation", "gender"]], population_level)
         st.plotly_chart(plotly_3d, user_container_width=True)
 
         # missingness
-        st.subheader("Missing AIsnps")
-        st.text(
-            f"Your file upload was missing {user_n_missing} ({round((user_n_missing / n_aisnps) * 100, 1)}%) of the {n_aisnps} total AIsnps.\nThese locations were imputed during prediction."
-        )
+        # st.subheader("Missing AIsnps")
+        # st.text(
+        #     f"Your file upload was missing {user_n_missing} ({round((user_n_missing / n_aisnps) * 100, 1)}%) of the {n_aisnps} total AIsnps.\nThese locations were imputed during prediction."
+        # )
 
         # predict the population for the user sample
-        user_pop = knn.predict(user_reduced)[0]
+        user_pop = aisnps_1kg.loc["me", population_level]
         st.subheader(f"Your predicted {population_level}")
         st.text(f"Your predicted population using knn classifier is {user_pop}")
         # show the predicted probabilities for each population
         st.subheader(f"Your predicted {population_level} probabilities")
-        user_pop_probs = knn.predict_proba(user_reduced)
+        if population_level == "superpopulation":
+            columns = ["AFR", "AMR", "EAS", "EUR", "SAS"]
+        else:
+            columns = aisnps_1kg[population_level].unique()
+        user_pop_probs = user_predictions[columns].values
         user_probs_df = pd.DataFrame(
-            [user_pop_probs[0]], columns=knn.classes_, index=["me"]
+            [user_pop_probs[0]], columns=columns, index=["me"]
         )
         st.dataframe(user_probs_df)
 
@@ -120,11 +110,14 @@ def main():
         if show_user_gts:
             user_table_title = "Genotypes of Ancestry-Informative SNPs in Your Sample"
             st.subheader(user_table_title)
-            st.dataframe(user_record)
+            st.dataframe(user_predictions)
 
     else:
         # plot
-        plotly_3d = plot_3d(X_reduced, dfsamples, population_level)
+        # st.write(aisnps_1kg)
+        aisnps_predictions = predict(input_data=filename, output_directory=None, write_predictions=False, models_directory=None, aisnps_directory=None, aisnps_set=aisnp_set)
+        X_reduced = aisnps_predictions[["component1", "component2", "component3"]].values
+        plotly_3d = plot_3d(X_reduced, aisnps_1kg[["population", "superpopulation", "gender"]], population_level)
         st.plotly_chart(plotly_3d, user_container_width=True)
 
     # Collapsable 1000 Genomes sample table
@@ -156,37 +149,6 @@ def get_file_content_as_string(mdfile):
             mdstring += line
     return mdstring
 
-
-def get_1kg_samples_app(
-    onekg_samples="data/samples/integrated_call_samples_v3.20130502.ALL.panel",
-):
-    return get_1kg_samples(onekg_samples)
-
-
-@st.cache(show_spinner=True)
-def encode_genotypes_app(df):
-    return encode_genotypes(df)
-
-
-def dimensionality_reduction_app(X, algorithm="pca"):
-    return dimensionality_reduction(X, algorithm)
-
-
-@st.cache(show_spinner=True)
-def filter_user_genotypes_app(userdf, aisnps_1kg):
-    return filter_user_genotypes(userdf, aisnps_1kg)
-
-
-@st.cache(show_spinner=True)
-def impute_missing_app(aisnps_1kg):
-    return impute_missing(aisnps_1kg)
-
-
-@st.cache
-def vcf2df_app(vcf_fname, dfsamples):
-    return vcf2df(vcf_fname, dfsamples)
-
-
 def plot_3d(X_reduced, dfsamples, pop):
     """Display the 3d scatter plot.
 
@@ -201,11 +163,11 @@ def plot_3d(X_reduced, dfsamples, pop):
     """
     X = np.hstack((X_reduced, dfsamples))
     columns = [
-        "component_1",
-        "component_2",
-        "component_3",
+        "component1",
+        "component2",
+        "component3",
         "population",
-        "super population",
+        "superpopulation",
         "gender",
     ]
     df = pd.DataFrame(X, columns=columns, index=dfsamples.index)
@@ -216,22 +178,16 @@ def plot_3d(X_reduced, dfsamples, pop):
 
     fig = px.scatter_3d(
         df,
-        x="component_1",
-        y="component_2",
-        z="component_3",
+        x="component1",
+        y="component2",
+        z="component3",
         color=pop,
         color_discrete_map=color_discrete_map,
         symbol=pop,
         height=600,
         size="size",
         opacity=0.95,
-        color_discrete_sequence=[
-            "#008fd5",
-            "#fc4f30",
-            "#e5ae38",
-            "#6d904f",
-            "#810f7c",
-        ],
+        color_discrete_sequence=hex_colors if pop == "population" else None,
     )
     if "me" not in dfsamples.index.tolist():
         fig.update_traces(marker=dict(size=2))

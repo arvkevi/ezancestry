@@ -1,6 +1,0 @@
-,fit_time,score_time,estimator,test_f1_macro,train_f1_macro,test_precision_macro,train_precision_macro,test_recall_macro,train_recall_macro,test_accuracy,train_accuracy,training_accuracy
-Fold 1,0.003477334976196289,0.056729793548583984,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",0.9959048479373681,1.0,0.9967741935483871,1.0,0.9951219512195122,1.0,0.9966777408637874,1.0,1.0
-Fold 2,0.0057141780853271484,0.02184605598449707,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",0.992706449668475,1.0,0.9906976744186047,1.0,0.9949999999999999,1.0,0.9933554817275747,1.0,1.0
-Fold 3,0.0031588077545166016,0.013970136642456055,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",0.9846333993874978,1.0,0.9840245775729647,1.0,0.98541289933695,1.0,0.9866666666666667,1.0,1.0
-Fold 4,0.003367185592651367,0.014317750930786133,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",0.996332499810563,1.0,0.9974999999999999,1.0,0.9952380952380953,1.0,0.9966666666666667,1.0,1.0
-Fold 5,0.0031249523162841797,0.01361989974975586,"KNeighborsClassifier(n_jobs=4, n_neighbors=9, weights='distance')",1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0

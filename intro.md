@@ -1,4 +1,5 @@
 # Genetic Ancestry Visualization
+
 The figure below displays samples from the [1000 Genomes Project](http://www.internationalgenome.org/home). What you are seeing are the samples' genotypes projected into a three-dimensional feature-space through dimensionality reduction techniques. Data points are colored according to a sample's [reported genetic ancestry](http://www.internationalgenome.org/faq/which-populations-are-part-your-study/).
 
 The genotypes were filtered to include only a small subset of the genome called [ancestry-informative single nucleotide polymorphisms](https://en.wikipedia.org/wiki/Ancestry-informative_marker) (**AISNPs**). Then, the genotypes were one-hot encoded. Finally, dimensionality reduction was performed to facilitate visualization.

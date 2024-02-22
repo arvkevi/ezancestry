@@ -1,0 +1,31 @@
+{
+	"name": "Python 3.11 ezancestry",
+	"image": "mcr.microsoft.com/devcontainers/python:3.11",
+	"postCreateCommand": "poetry config virtualenvs.in-project true && poetry install",
+	"forwardPorts": [
+		9000
+	],
+	"features": {
+		"ghcr.io/devcontainers-contrib/features/poetry:2": {},
+		"ghcr.io/devcontainers-contrib/features/ruff:1": {},
+		"ghcr.io/devcontainers/features/python:1": {},
+		"ghcr.io/devcontainers/features/sshd:1": {
+			"version": "latest"
+		}
+	},
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			"settings": {},
+			"extensions": [
+				"charliermarsh.ruff",
+				"ms-toolsai.jupyter-keymap",
+				"GitHub.copilot",
+				"GitHub.copilot-chat",
+				"ms-toolsai.jupyter",
+				"ms-toolsai.vscode-jupyter-cell-tags",
+				"ms-toolsai.jupyter-renderers"
+			]
+		}
+	}
+}

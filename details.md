@@ -1,6 +1,6 @@
 # Details
 
-Depending on which company performed your genotyping, your sample might be missing information for some of the 55 (or 128) **AISNPs**. There is a basic implementation of scikit-learn's `KNNImputer` to impute missing genotypes in your sample based on your nearest neighbors in the feature-space.
+Depending on which company performed your genotyping, your sample might be missing information for some of the 55 (or 128) **AISNPs**.
 
 * To show a table of your genotypes at the AISNP locations, check **Show Your Genotypes**.
 
@@ -15,25 +15,16 @@ The subset of `SNPs` were chosen from two publications which identified **AISNPs
 
 ## Parameters
 
-**Set of AISNPs to use**  
+### Set of AISNPs to use
+
 * `Kidd 55 AISNPs`: Subset the 1kG data to the 55 SNPs listed in the manuscript.
 * `Seldin 128 AISNPs`: Subset the 1kG data to the 128 SNPs listed in the manuscript.
 
-**Dimensionality Reduction Algorithm**
-* `PCA`: *Principal Component Analysis*
-  * Fastest
-  * [scikit-learn implementation](https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html)
-* `T-SNE`: *t-Distributued Stochastic Neighbor Embedding*
-  * Slow
-  * [sckit-learn implementation](https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html) -- *not used*
-  * [Multicore-TSNE implementation](https://github.com/DmitryUlyanov/Multicore-TSNE) -- *used here*
-* `UMAP`: *Uniform Manifold Approximation and Projection*
-  * Faster than t-SNE.
-  * [umap-learn implementation](https://umap-learn.readthedocs.io/en/latest/)
+### Population Resolution
 
-**Population Resolution**
 * `Super Population`: One of {AFR, AMR, EAS, EUR, SAS}.
 * `Population`: One of the 26 populations listed [here](http://www.internationalgenome.org/faq/which-populations-are-part-your-study/).
 
-## Code  
+## Code
+
 The code used to process this data is available on [GitHub](https://github.com/arvkevi/ezancestry).
