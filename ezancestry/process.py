@@ -122,7 +122,6 @@ def _input_to_dataframe(input_data, aisnpsdf):
     :rtype: pandas DataFrame
     """
     # try to read a single file
-    logger.info(input_data)
     try:
         is_pathlike = bool(Path(input_data))
     except TypeError:
