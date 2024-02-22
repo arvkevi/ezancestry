@@ -17,14 +17,11 @@ def test_predict_from_file(algorithm):
         write_predictions=False,
         models_directory=data_directory.joinpath("models"),
         aisnps_directory=None,
-        n_components=None,
-        k=None,
-        algorithm=algorithm,
         aisnps_set=None,
     )
     assert (
         results.loc[
-            "sample_genome_snps.txt", "predicted_population_superpopulation"
+            "sample_genome_snps.txt", "predicted_ancestry_superpopulation"
         ]
         == "EUR"
     )
