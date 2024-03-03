@@ -8,5 +8,5 @@ typer>=0.8.0
 pysam==0.22.0
 streamlit>=1.0.1
 altair<5
-ezancestry @ git+https://github.com/arvkevi/ezancestry@updates
+ezancestry==0.1.0
 matplotlib==3.7.0
