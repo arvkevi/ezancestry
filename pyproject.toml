@@ -32,7 +32,7 @@ pytest = "^6.2.5"
 ipykernel = "^6.29.2"
 
 [tool.poetry.group.streamlit.dependencies]
-streamlit = ">1.0.1,<1.38"
+streamlit = ">1.0.1,<1.37"
 altair = "<5"
 
 [build-system]
