@@ -209,6 +209,9 @@ def predict(
         )
 
         snpsdf = process_user_input(input_data, aisnps_directory, aisnps_set)
+        if snpsdf.empty:
+            logger.error("No valid SNPs found in the input data. Please ensure the file format is supported and contains genetic data.")
+            raise typer.Exit(1)
         index = snpsdf.index
         try:
             model = joblib.load(model_path)
